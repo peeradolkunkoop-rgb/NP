@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Blox Fruits 2D - Mobile Version 📱</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center;
+            background-color: #1a1a1a; color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; /* ป้องกันหน้าจอเลื่อนบนมือถือ */
+            touch-action: none;
+            user-select: none;
+        }
+        h1 { color: #f1c40f; text-shadow: 2px 2px #c0392b; margin: 10px 0; font-size: 1.5rem; }
+        
+        /* ปรับให้หน้าจอเกมย่อตามมือถืออัตโนมัติ */
+        canvas {
+            background-color: #27ae60; 
+            border: 3px solid #34495e;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+            max-height: 55vh; /* เว้นที่ว่างด้านล่างให้ปุ่ม */
+        }
+        
+        /* ---------------- ปุ่มบังคับบนมือถือ ---------------- */
+        .mobile-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            box-sizing: border-box;
+            margin-top: 10px;
+        }
+        .d-pad {
+            display: grid;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px 60px;
+            gap: 5px;
+        }
+        .btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            color: white; font-size: 24px; font-weight: bold;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+        }
+        .btn:active { background: rgba(255, 255, 255, 0.5); }
+        .btn-up { grid-column: 2; grid-row: 1; }
+        .btn-left { grid-column: 1; grid-row: 2; }
+        .btn-right { grid-column: 3; grid-row: 2; }
+        .btn-down { grid-column: 2; grid-row: 3; }
+        
+        .btn-attack {
+            width: 90px; height: 90px;
+            border-radius: 50%;
+            background: rgba(231, 76, 60, 0.6);
+            border: 4px solid #e74c3c;
+            color: white; font-size: 18px; font-weight: bold;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .btn-attack:active { background: rgba(231, 76, 60, 1); box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        
+        /* ซ่อนคำแนะนำบนจอมือถือเล็กๆ เพื่อประหยัดพื้นที่ */
+        .instructions { display: none; }
+        @media (min-width: 768px) {
+            .instructions { 
+                display: block; margin-top: 10px; font-size: 0.9rem; text-align: center;
+                background: rgba(255, 255, 255, 0.1); padding: 10px 20px; border-radius: 8px; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Blox Fruits 2D (Mobile📱)</h1>
+    <!-- เกม Canvas ตั้งค่าความละเอียดที่ 800x600 แต่ภาพจะย่อตามขนาดมือถือ -->
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    
+    <div class="instructions">
+        (สามารถใช้คีย์บอร์ด W A S D และ Spacebar เล่นบนคอมพิวเตอร์ได้ตามปกติ)
+    </div>
+
+    <!-- UI ปุ่มกดสำหรับมือถือ -->
+    <div class="mobile-controls">
+        <div class="d-pad">
+            <div class="btn btn-up" id="btnUp">W</div>
+            <div class="btn btn-left" id="btnLeft">A</div>
+            <div class="btn btn-right" id="btnRight">D</div>
+            <div class="btn btn-down" id="btnDown">S</div>
+        </div>
+        <div class="btn-attack" id="btnAttack">⚔️ ATTACK</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // ------------------ ระบบเสียง ------------------
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx; let audioInitialized = false;
+
+        function initAudio() {
+            if (!audioInitialized) {
+                audioCtx = new AudioContext(); audioInitialized = true;
+                playSpawnSound();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSynth(type, startFreq, endFreq, duration, vol = 0.1) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = type; osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+            
+            osc.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
+            if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, audioCtx.currentTime + duration);
+            
+            gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            
+            osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playSpawnSound() { playSynth('sine', 300, 800, 0.5, 0.1); }
+        function playPunchSound() { playSynth('square', 150, 50, 0.15, 0.1); }
+        function playFireballSound() { playSynth('sawtooth', 800, 200, 0.2, 0.1); }
+        function playEatFruitSound() { playSynth('triangle', 400, 1200, 0.4, 0.2); }
+        function playEnemyDeathSound() { playSynth('sawtooth', 300, 50, 0.3, 0.1); }
+        function playBossSpawnSound() { playSynth('square', 100, 40, 1.5, 0.2); }
+        function playLevelUpSound() { playSynth('square', 400, 600, 0.4, 0.1); }
+
+        // ------------------ ข้อมูลเกมและผลปีศาจ ------------------
+        const fruitRoster = [
+            { stars: 1, name: "Chop", color: "#bdc3c7", weight: 45, buff: "dmg" },
+            { stars: 2, name: "Smoke", color: "#7f8c8d", weight: 30, buff: "range" },
+            { stars: 3, name: "Flame", color: "#e74c3c", weight: 15, buff: "shoot" },
+            { stars: 4, name: "Light", color: "#f1c40f", weight: 8, buff: "speed" },
+            { stars: 5, name: "Buddha", color: "#e67e22", weight: 2, buff: "giant" }
+        ];
+
+        let gameOver = false;
+        let bossSpawned = false;
+
+        const player = {
+            x: 400, y: 300, color: "#3498db", 
+            baseSize: 30, baseSpeed: 5, baseRange: 60, baseDamage: 35,
+            size: 30, speed: 5, attackRange: 60, damage: 35,
+            hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 100, beli: 0,
+            activeFruit: null, lastDir: { x: 1, y: 0 }
+        };
+
+        let fruitOnGround = { x: 200, y: 200, size: 25, data: fruitRoster[0] };
+        let enemies = [];
+        let projectiles = [];
+        let boss = null;
+
+        const keys = {};
+        let attackTimer = 0;
+        let isAttacking = false;
+
+        function getRandomFruitData() {
+            let total = fruitRoster.reduce((sum, f) => sum + f.weight, 0);
+            let rand = Math.random() * total;
+            for (let f of fruitRoster) {
+                if (rand < f.weight) return f; rand -= f.weight;
+            }
+            return fruitRoster[0];
+        }
+
+        function respawnFruit() {
+            fruitOnGround.x = Math.random() * (canvas.width - 60) + 30;
+            fruitOnGround.y = Math.random() * (canvas.height - 60) + 30;
+            fruitOnGround.data = getRandomFruitData();
+        }
+        respawnFruit();
+
+        // ------------------ ระบบควบคุม (คีย์บอร์ด & มือถือ) ------------------
+        window.addEventListener("keydown", (e) => {
+            initAudio(); keys[e.key] = true;
+            if (e.code === "Space") performAttack();
+        });
+        window.addEventListener("keyup", (e) => { keys[e.key] = false; });
+
+        // ฟังก์ชันสั่งโจมตี (แยกออกมาเพื่อให้ปุ่มมือถือเรียกใช้ได้)
+        function performAttack() {
+            initAudio();
+            if (attackTimer <= 0 && !gameOver) {
+                let cooldown = (player.activeFruit && player.activeFruit.buff === "speed") ? 10 : 20; 
+                attackTimer = cooldown;
+                isAttacking = true;
+
+                if (player.activeFruit && player.activeFruit.buff === "shoot") {
+                    playFireballSound();
+                    projectiles.push({
+                        x: player.x, y: player.y, dx: player.lastDir.x * 10, dy: player.lastDir.y * 10,
+                        size: 15, color: "#e74c3c", damage: player.damage * 1.5, life: 60
+                    });
+                } else {
+                    playPunchSound(); dealAoEDamage();
+                }
+            }
+        }
+
+        // เชื่อมโยงปุ่มบนหน้าจอมือถือ (Touch Events)
+        function bindTouchButton(elementId, keyName) {
+            const btn = document.getElementById(elementId);
+            const startPress = (e) => { e.preventDefault(); initAudio(); keys[keyName] = true; };
+            const stopPress = (e) => { e.preventDefault(); keys[keyName] = false; };
+            
+            btn.addEventListener('touchstart', startPress);
+            btn.addEventListener('touchend', stopPress);
+            btn.addEventListener('mousedown', startPress); // รองรับเม้าส์คลิกด้วย
+            btn.addEventListener('mouseup', stopPress);
+            btn.addEventListener('mouseleave', stopPress);
+        }
+        bindTouchButton('btnUp', 'w');
+        bindTouchButton('btnDown', 's');
+        bindTouchButton('btnLeft', 'a');
+        bindTouchButton('btnRight', 'd');
+
+        // ปุ่มโจมตี
+        const btnAttack = document.getElementById('btnAttack');
+        btnAttack.addEventListener('touchstart', (e) => { e.preventDefault(); performAttack(); });
+        btnAttack.addEventListener('mousedown', (e) => { e.preventDefault(); performAttack(); });
+
+        // ------------------ ระบบต่อสู้ ------------------
+        function dealAoEDamage() {
+            let targets = [...enemies];
+            if (boss) targets.push(boss);
+            for (let i = targets.length - 1; i >= 0; i--) {
+                let t = targets[i];
+                let dx = t.x - player.x; let dy = t.y - player.y;
+                if (Math.sqrt(dx*dx + dy*dy) < player.attackRange + t.size) {
+                    t.hp -= player.damage;
+                    checkKill(t, t === boss);
+                }
+            }
+        }
+
+        function checkKill(target, isBoss) {
+            if (target.hp <= 0) {
+                playEnemyDeathSound();
+                if (isBoss) { gainXp(500); player.beli += 5000; boss = null; } 
+                else { gainXp(30); player.beli += 100; enemies = enemies.filter(e => e !== target); }
+            }
+        }
+
+        function spawnEnemy() {
+            if (enemies.length < 5 && !gameOver) {
+                enemies.push({
+                    x: Math.random() < 0.5 ? 0 : canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: 25, color: "#e67e22", speed: 1.5 + (player.level * 0.2), 
+                    hp: 50 + (player.level * 10), maxHp: 50 + (player.level * 10), damage: 5
+                });
+            }
+        }
+        setInterval(spawnEnemy, 2000);
+
+        function gainXp(amount) {
+            player.xp += amount;
+            if (player.xp >= player.maxXp) {
+                player.level++; player.xp -= player.maxXp; player.maxXp = Math.floor(player.maxXp * 1.5);
+                player.maxHp += 20; player.hp = player.maxHp; player.baseDamage += 5;
+                applyFruitBuff(); playLevelUpSound();
+                
+                if (player.level >= 5 && !bossSpawned) {
+                    bossSpawned = true; playBossSpawnSound();
+                    boss = { x: 400, y: 100, size: 60, color: "#8e44ad", speed: 2.5, hp: 1000, maxHp: 1000, damage: 15, name: "Gorilla Boss" };
+                }
+            }
+        }
+
+        function applyFruitBuff() {
+            player.size = player.baseSize; player.speed = player.baseSpeed;
+            player.attackRange = player.baseRange; player.damage = player.baseDamage;
+            if (!player.activeFruit) return;
+            let buff = player.activeFruit.buff;
+            if (buff === "dmg") player.damage += 20;
+            if (buff === "range") player.attackRange += 50;
+            if (buff === "speed") { player.speed += 4; player.color = "#f1c40f"; }
+            if (buff === "giant") { player.size = 70; player.attackRange += 80; player.damage *= 2; player.color = "#e67e22"; }
+        }
+
+        // ------------------ อัปเดตเกมหลัก ------------------
+        function update() {
+            if (gameOver) return;
+
+            let movedX = 0, movedY = 0;
+            if (keys["ArrowUp"] || keys["w"] || keys["W"]) movedY = -1;
+            if (keys["ArrowDown"] || keys["s"] || keys["S"]) movedY = 1;
+            if (keys["ArrowLeft"] || keys["a"] || keys["A"]) movedX = -1;
+            if (keys["ArrowRight"] || keys["d"] || keys["D"]) movedX = 1;
+
+            if (movedX !== 0 || movedY !== 0) {
+                let length = Math.sqrt(movedX*movedX + movedY*movedY);
+                player.lastDir.x = movedX / length; player.lastDir.y = movedY / length;
+                player.x += player.lastDir.x * player.speed;
+                player.y += player.lastDir.y * player.speed;
+            }
+
+            player.x = Math.max(player.size/2, Math.min(canvas.width - player.size/2, player.x));
+            player.y = Math.max(player.size/2, Math.min(canvas.height - player.size/2, player.y));
+
+            let fdx = fruitOnGround.x - player.x; let fdy = fruitOnGround.y - player.y;
+            if (Math.sqrt(fdx*fdx + fdy*fdy) < player.size/2 + fruitOnGround.size/2) {
+                playEatFruitSound();
+                player.activeFruit = fruitOnGround.data; player.color = "#3498db"; 
+                applyFruitBuff(); player.beli += 1000 * fruitOnGround.data.stars;
+                gainXp(100); respawnFruit();
+            }
+
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                let p = projectiles[i]; p.x += p.dx; p.y += p.dy; p.life--;
+                let hitTarget = false; let targets = [...enemies]; if (boss) targets.push(boss);
+                for (let t of targets) {
+                    let dx = t.x - p.x; let dy = t.y - p.y;
+                    if (Math.sqrt(dx*dx + dy*dy) < t.size/2 + p.size/2) {
+                        t.hp -= p.damage; checkKill(t, t === boss); hitTarget = true; break;
+                    }
+                }
+                if (hitTarget || p.life <= 0 || p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+                    projectiles.splice(i, 1);
+                }
+            }
+
+            enemies.forEach(enemy => {
+                let dx = player.x - enemy.x; let dy = player.y - enemy.y;
+                let angle = Math.atan2(dy, dx);
+                enemy.x += Math.cos(angle) * enemy.speed; enemy.y += Math.sin(angle) * enemy.speed;
+                if (Math.sqrt(dx*dx + dy*dy) < player.size/2 + enemy.size/2) player.hp -= enemy.damage / 60;
+            });
+
+            if (boss) {
+                let dx = player.x - boss.x; let dy = player.y - boss.y;
+                let angle = Math.atan2(dy, dx);
+                boss.x += Math.cos(angle) * boss.speed; boss.y += Math.sin(angle) * boss.speed;
+                if (Math.sqrt(dx*dx + dy*dy) < player.size/2 + boss.size/2) player.hp -= boss.damage / 60;
+            }
+
+            if (attackTimer > 0) attackTimer--; else isAttacking = false;
+            if (player.hp <= 0) gameOver = true;
+        }
+
+        // ------------------ วาดกราฟิก ------------------
+        function drawHealthBar(x, y, hp, maxHp, width, height) {
+            ctx.fillStyle = "red"; ctx.fillRect(x - width/2, y - height - 10, width, height);
+            ctx.fillStyle = "#2ecc71"; ctx.fillRect(x - width/2, y - height - 10, width * (Math.max(0, hp) / maxHp), height);
+            ctx.strokeStyle = "black"; ctx.strokeRect(x - width/2, y - height - 10, width, height);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (gameOver) {
+                ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "red"; ctx.font = "bold 50px Arial"; ctx.fillText("YOU DIED", canvas.width/2 - 120, canvas.height/2);
+                ctx.fillStyle = "white"; ctx.font = "20px Arial"; ctx.fillText("รีเฟรชหน้าจอเพื่อเริ่มใหม่", canvas.width/2 - 100, canvas.height/2 + 40);
+                return;
+            }
+
+            ctx.fillStyle = fruitOnGround.data.color;
+            ctx.beginPath(); ctx.arc(fruitOnGround.x, fruitOnGround.y, fruitOnGround.size/2, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = "yellow"; ctx.font = "16px Arial";
+            let starStr = "★".repeat(fruitOnGround.data.stars);
+            ctx.fillText(starStr, fruitOnGround.x - (fruitOnGround.data.stars * 8), fruitOnGround.y - 20);
+
+            enemies.forEach(enemy => {
+                ctx.fillStyle = enemy.color; ctx.fillRect(enemy.x - enemy.size/2, enemy.y - enemy.size/2, enemy.size, enemy.size);
+                drawHealthBar(enemy.x, enemy.y - 10, enemy.hp, enemy.maxHp, 30, 5);
+            });
+
+            projectiles.forEach(p => {
+                ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size/2, 0, Math.PI * 2); ctx.fill();
+            });
+
+            if (boss) {
+                ctx.fillStyle = boss.color; ctx.beginPath(); ctx.arc(boss.x, boss.y, boss.size/2, 0, Math.PI * 2); ctx.fill();
+                ctx.lineWidth = 3; ctx.strokeStyle = "black"; ctx.stroke();
+                
+                ctx.fillStyle = "red"; ctx.fillRect(200, 50, 400, 20);
+                ctx.fillStyle = "#8e44ad"; ctx.fillRect(200, 50, 400 * (Math.max(0, boss.hp) / boss.maxHp), 20);
+                ctx.strokeStyle = "white"; ctx.strokeRect(200, 50, 400, 20);
+                ctx.fillStyle = "white"; ctx.font = "bold 16px Arial"; ctx.fillText(boss.name, 370, 45);
+            }
+
+            if (isAttacking && (!player.activeFruit || player.activeFruit.buff !== "shoot")) {
+                ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+                ctx.beginPath(); ctx.arc(player.x, player.y, player.attackRange, 0, Math.PI * 2); ctx.fill();
+            }
+
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+            ctx.strokeStyle = "black"; ctx.strokeRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+            
+            ctx.fillStyle = "white"; ctx.font = "bold 18px Arial";
+            ctx.fillText("Lv: " + player.level, 10, 30);
+            ctx.fillText("💰 Beli: " + player.beli, 10, 55);
+            let activeFruitName = player.activeFruit ? player.activeFruit.name + " " + "★".repeat(player.activeFruit.stars) : "None";
+            ctx.fillStyle = player.activeFruit ? player.activeFruit.color : "#bdc3c7";
+            ctx.fillText("Devil Fruit: " + activeFruitName, 10, 80);
+            
+            ctx.fillStyle = "white"; ctx.font = "14px Arial"; ctx.fillText("HP", 10, 115);
+            ctx.fillStyle = "red"; ctx.fillRect(45, 100, 150, 20);
+            ctx.fillStyle = "#2ecc71"; ctx.fillRect(45, 100, 150 * (player.hp / player.maxHp), 20);
+            ctx.strokeRect(45, 100, 150, 20);
+
+            ctx.fillStyle = "white"; ctx.fillText("EXP", 10, 145);
+            ctx.fillStyle = "gray"; ctx.fillRect(45, 130, 150, 15);
+            ctx.fillStyle = "#f1c40f"; ctx.fillRect(45, 130, 150 * (player.xp / player.maxXp), 15);
+            ctx.strokeRect(45, 130, 150, 15);
+        }
+
+        function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+        gameLoop();
+    </script>
+</body>
+</html>
