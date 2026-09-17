@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Blox Fruits 2D - Skills & Aim 🎯</title>
+    <style>
+        body {
+            margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center;
+            background-color: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif;
+            overflow: hidden; touch-action: none; user-select: none;
+        }
+        h1 { color: #f1c40f; text-shadow: 2px 2px #c0392b; margin: 10px 0; font-size: 1.5rem; }
+        canvas {
+            background-color: #27ae60; border: 3px solid #34495e; border-radius: 10px; cursor: crosshair;
+            box-shadow: 0 0 15px rgba(0,0,0,0.8); width: 100%; max-width: 800px; height: auto; max-height: 55vh;
+        }
+        .controls-container {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            width: 100%; max-width: 800px; padding: 15px; box-sizing: border-box;
+        }
+        .d-pad { display: grid; grid-template-columns: 50px 50px 50px; grid-template-rows: 50px 50px 50px; gap: 5px; }
+        .btn {
+            background: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 10px;
+            color: white; font-size: 20px; font-weight: bold; display: flex; justify-content: center; align-items: center; cursor: pointer;
+        }
+        .btn:active { background: rgba(255, 255, 255, 0.5); }
+        .btn-up { grid-column: 2; grid-row: 1; } .btn-left { grid-column: 1; grid-row: 2; }
+        .btn-right { grid-column: 3; grid-row: 2; } .btn-down { grid-column: 2; grid-row: 3; }
+        
+        .action-btns { display: flex; gap: 10px; align-items: flex-end; }
+        .btn-skill {
+            width: 60px; height: 60px; border-radius: 50%; font-size: 14px; font-weight: bold;
+            background: rgba(52, 152, 219, 0.8); border: 3px solid #2980b9; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer;
+            position: relative; overflow: hidden;
+        }
+        .btn-skill:active { background: #3498db; }
+        .cd-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); transition: height 0.1s; }
+        
+        .btn-attack {
+            width: 80px; height: 80px; border-radius: 50%; background: rgba(231, 76, 60, 0.8); border: 4px solid #c0392b;
+            color: white; font-size: 16px; font-weight: bold; display: flex; justify-content: center; align-items: center;
+        }
+        .btn-attack:active { background: #e74c3c; }
+        .instructions { font-size: 0.85rem; color: #bdc3c7; margin-top: 5px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <h1>Blox Fruits 2D (Aim & Skills 🎯)</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div class="instructions">แตะ/คลิก ที่หน้าจอเกมเพื่อเล็งเป้า 🎯 | PC: เดิน WASD, ตี Spacebar, สกิล Z, X</div>
+
+    <div class="controls-container">
+        <div class="d-pad">
+            <div class="btn btn-up" id="btnUp">W</div><div class="btn btn-left" id="btnLeft">A</div>
+            <div class="btn btn-right" id="btnRight">D</div><div class="btn btn-down" id="btnDown">S</div>
+        </div>
+        
+        <div class="action-btns">
+            <div class="btn-skill" id="btnZ">
+                <div class="cd-overlay" id="cdZ"></div>
+                <span>Z</span><span style="font-size: 10px;">Skill 1</span>
+            </div>
+            <div class="btn-skill" id="btnX">
+                <div class="cd-overlay" id="cdX"></div>
+                <span>X</span><span style="font-size: 10px;">Skill 2</span>
+            </div>
+            <div class="btn-attack" id="btnAttack">⚔️ ตี</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+
+        const fruitRoster = [
+            { stars: 1, name: "Chop", emoji: "🍈", playerImg: "🥷", weight: 35, buff: "dmg", color: "#bdc3c7" },
+            { stars: 2, name: "Smoke", emoji: "🍇", playerImg: "🌫️", weight: 25, buff: "range", color: "#7f8c8d" },
+            { stars: 2, name: "Rubber", emoji: "🟣", playerImg: "🦸‍♂️", weight: 20, buff: "long_punch", color: "#9b59b6" }, 
+            { stars: 3, name: "Flame", emoji: "🍒", playerImg: "🔥", weight: 15, buff: "shoot", color: "#e74c3c" },
+            { stars: 3, name: "Ice", emoji: "🧊", playerImg: "⛄", weight: 15, buff: "ice_shoot", color: "#00cec9" },
+            { stars: 4, name: "Light", emoji: "🍍", playerImg: "⚡", weight: 8, buff: "speed", color: "#f1c40f" },
+            { stars: 5, name: "Quake", emoji: "🌍", playerImg: "🧔‍♂️", weight: 3, buff: "mega_aoe", color: "#ecf0f1" },
+            { stars: 5, name: "Buddha", emoji: "🍌", playerImg: "🧘‍♂️", weight: 2, buff: "giant", color: "#e67e22" },
+            { stars: 6, name: "Dragon", emoji: "🐉", playerImg: "🐲", weight: 1, buff: "dragon", color: "#c0392b" }
+        ];
+
+        let gameOver = false;
+        let wave = 1; let enemiesKilledInWave = 0; let bossActive = false;
+        const bossImages = ["🦍", "🦈", "🦖", "👽", "👹"];
+
+        const player = {
+            x: 400, y: 300, color: "#3498db", 
+            baseSize: 40, baseSpeed: 5, baseRange: 60, baseDamage: 35, baseImg: "👦", 
+            size: 40, speed: 5, attackRange: 60, damage: 35, img: "👦",
+            hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 100, beli: 0,
+            activeFruit: null, aimDir: { x: 1, y: 0 },
+            cdAttack: 0, cdZ: 0, maxCdZ: 100, cdX: 0, maxCdX: 200, speedBuff: 0
+        };
+
+        let fruitOnGround = { x: 200, y: 200, size: 35, data: fruitRoster[0] };
+        let enemies = []; let projectiles = []; let boss = null; let effects = [];
+        const keys = {}; let isAttacking = false;
+
+        function respawnFruit() {
+            fruitOnGround.x = Math.random() * (canvas.width - 60) + 30;
+            fruitOnGround.y = Math.random() * (canvas.height - 60) + 30;
+            let total = fruitRoster.reduce((sum, f) => sum + f.weight, 0); let rand = Math.random() * total;
+            for (let f of fruitRoster) { if (rand < f.weight) { fruitOnGround.data = f; break; } rand -= f.weight; }
+        }
+        respawnFruit();
+
+        // ------------------ ระบบเล็งด้วยนิ้ว/เมาส์ (Aiming) ------------------
+        function updateAim(e) {
+            if(e.target !== canvas) return;
+            const rect = canvas.getBoundingClientRect();
+            let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            if(!clientX) return;
+            
+            const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height;
+            const touchX = (clientX - rect.left) * scaleX; const touchY = (clientY - rect.top) * scaleY;
+            
+            let dx = touchX - player.x; let dy = touchY - player.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            if(dist > 0) { player.aimDir.x = dx / dist; player.aimDir.y = dy / dist; }
+        }
+        
+        canvas.addEventListener("pointerdown", (e) => { updateAim(e); performAttack(); });
+        canvas.addEventListener("pointermove", (e) => { if(e.buttons > 0) updateAim(e); });
+        canvas.addEventListener("touchstart", (e) => { updateAim(e); performAttack(); }, {passive: false});
+        canvas.addEventListener("touchmove", (e) => { updateAim(e); }, {passive: false});
+
+        // ------------------ ควบคุมปุ่ม ------------------
+        window.addEventListener("keydown", (e) => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.code === "Space") performAttack();
+            if (e.code === "KeyZ") useSkillZ();
+            if (e.code === "KeyX") useSkillX();
+        });
+        window.addEventListener("keyup", (e) => { keys[e.key.toLowerCase()] = false; });
+
+        function performAttack() {
+            if (player.cdAttack <= 0 && !gameOver) {
+                let cd = 20; 
+                if (player.activeFruit) {
+                    if (player.activeFruit.buff === "speed") cd = 10;
+                    if (player.activeFruit.buff === "long_punch") cd = 15;
+                    if (player.activeFruit.buff === "mega_aoe") cd = 40; 
+                    if (player.activeFruit.buff === "dragon") cd = 25;
+                }
+                player.cdAttack = cd; isAttacking = true;
+                let buff = player.activeFruit ? player.activeFruit.buff : "none";
+
+                if (["shoot", "ice_shoot", "dragon"].includes(buff)) {
+                    let pEmoji = "☄️"; let pType = "fire"; let pSize = 25; let pDmg = player.damage * 1.5; let pSpeed = 12;
+                    if (buff === "ice_shoot") { pEmoji = "❄️"; pType = "ice"; }
+                    if (buff === "dragon") { pEmoji = "🔥"; pType = "dragon"; pSize = 50; pDmg = player.damage * 4; pSpeed = 15; }
+                    shootProjectile(player.x, player.y, player.aimDir.x, player.aimDir.y, pSpeed, pSize, pEmoji, pDmg, 60, pType, buff === "dragon");
+                } else {
+                    dealAoEDamage(player.x, player.y, player.attackRange, player.damage);
+                }
+            }
+        }
+
+        // ------------------ ระบบ SKILL ------------------
+        function shootProjectile(x, y, dx, dy, speed, size, emoji, damage, life, type, pierce=false) {
+            projectiles.push({ x: x, y: y, dx: dx * speed, dy: dy * speed, size: size, emoji: emoji, damage: damage, life: life, type: type, pierce: pierce, hitList: [] });
+        }
+
+        function dealAoEDamage(x, y, radius, damage, type="normal") {
+            let targets = [...enemies]; if (bossActive && boss) targets.push(boss);
+            for (let t of targets) {
+                let dx = t.x - x; let dy = t.y - y;
+                if (Math.sqrt(dx*dx + dy*dy) < radius + (t.size/2)) {
+                    t.hp -= damage;
+                    if (type === "ice") t.speed = Math.max(0.5, t.baseSpeed * 0.4); // น้ำแข็งสโลว์
+                    if (type === "knockback") { t.x += player.aimDir.x * 50; t.y += player.aimDir.y * 50; } // พระผลัก
+                    checkKill(t, t === boss);
+                }
+            }
+            effects.push({ x: x, y: y, radius: radius, life: 10, color: type === "ice" ? "rgba(0, 255, 255, 0.4)" : "rgba(255, 255, 255, 0.4)" });
+        }
+
+        function useSkillZ() {
+            if (player.cdZ > 0 || gameOver) return;
+            let buff = player.activeFruit ? player.activeFruit.buff : "none";
+            player.cdZ = player.maxCdZ = 120; // Default CD
+            
+            if (buff === "none") { player.x += player.aimDir.x * 100; player.y += player.aimDir.y * 100; dealAoEDamage(player.x, player.y, 60, player.damage); } // พุ่ง
+            else if (buff === "dmg") { player.cdZ = player.maxCdZ = 60; player.x += player.aimDir.x * 80; player.y += player.aimDir.y * 80; dealAoEDamage(player.x, player.y, 70, player.damage * 1.5); } // Chop Dash
+            else if (buff === "range") { shootProjectile(player.x, player.y, player.aimDir.x, player.aimDir.y, 8, 50, "💨", player.damage*1.5, 50, "normal", true); } // Smoke Bomb
+            else if (buff === "long_punch") { // Rubber Gatling
+                for(let i=0; i<5; i++) setTimeout(() => shootProjectile(player.x, player.y, player.aimDir.x, player.aimDir.y, 15 + i, 20, "👊", player.damage, 30, "normal"), i*100);
+            }
+            else if (buff === "shoot") { // Flame Spread
+                shootProjectile(player.x, player.y, player.aimDir.x, player.aimDir.y, 12, 25, "☄️", player.damage*1.5, 60, "fire");
+                shootProjectile(player.x, player.y, player.aimDir.x + 0.3, player.aimDir.y - 0.3, 12, 25, "☄️", player.damage*1.5, 60, "fire");
+                shootProjectile(player.x, player.y, player.aimDir.x - 0.3, player.aimDir.y + 0.3, 12, 25, "☄️", player.damage*1.5, 60, "fire");
+            }
+            else if (buff === "ice_shoot") { player.cdZ = player.maxCdZ = 80; shootProjectile(player.x, player.y, player.aimDir.x, player.aimDir.y, 18, 30, "🧊", player.damage*2, 40, "ice", true); }
+            else if (buff === "speed") { player.x += player.aimDir.x * 200; player.y += player.aimDir.y * 200; dealAoEDamage(player.x, player.y, 80, player.damage); } // Light Flash
+            else if (buff === "mega_aoe") { dealAoEDamage(player.x, player.y, 150, player.damage * 3); } // Quake Smash
+            else if (buff === "giant") { dealAoEDamage(player.x, player.y, 200, player.damage, "knockback"); } // Buddha Shockwave
+            else if (buff === "dragon") { dealAoEDamage(player.x, player.y, 180, player.damage * 4); player.cdZ = player.maxCdZ = 150; } // Dragon Roar
+        }
+
+        function useSkillX() {
+            if (player.cdX > 0 || gameOver) return;
+            let buff = player.activeFruit ? player.activeFruit.buff : "none";
+            player.cdX = player.maxCdX = 250; 
+            
+            if (buff === "none") { dealAoEDamage(player.x, player.y, 100, player.damage * 2); } // ทุบแรง
+            else if (buff === "dmg") { dealAoEDamage(player.x, player.y, 150, player.damage * 3); } // Chop Sweep
+            else if (buff === "range") { player.speedBuff = 180; } // Smoke Speed
+            else if (buff === "long_punch") { shootProjectile(player.x, player.y, player.aimDir.x, player.aimDir.y, 25, 40, "✊", player.damage*3, 60, "normal", true); } // Pistol
+            else if (buff === "shoot") { shootProjectile(player.x, player.y, player.aimDir.x, player.aimDir.y, 0, 70, "🔥", player.damage*0.5, 120, "fire", true); } // Pillar
+            else if (buff === "ice_shoot") { dealAoEDamage(player.x, player.y, 250, player.damage*2, "ice"); } // Blizzard
+            else if (buff === "speed") { for(let i=0; i<10; i++) setTimeout(() => shootProjectile(player.x, player.y, player.aimDir.x + (Math.random()-0.5), player.aimDir.y + (Math.random()-0.5), 20, 15, "✨", player.damage, 30, "normal"), i*50); } // Light Shower
+            else if (buff === "mega_aoe") { player.cdX = player.maxCdX = 400; dealAoEDamage(400, 300, 800, player.damage * 5); effects.push({x:400, y:300, radius: 800, life:20, color:"rgba(255,255,255,0.7)"}); } // Tsunami (กวาดจอ)
+            else if (buff === "giant") { player.hp = Math.min(player.maxHp, player.hp + player.maxHp*0.3); player.cdX = player.maxCdX = 300; } // Buddha Heal
+            else if (buff === "dragon") { shootProjectile(player.x, player.y, player.aimDir.x, player.aimDir.y, 5, 120, "☄️", player.damage*8, 80, "dragon", true); player.cdX = player.maxCdX = 400;} // Meteor
+        }
+
+        // ปุ่ม UI
+        function bindBtn(id, action) {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', (e)=>{e.preventDefault(); action();});
+            btn.addEventListener('mousedown', (e)=>{e.preventDefault(); action();});
+        }
+        bindBtn('btnAttack', performAttack); bindBtn('btnZ', useSkillZ); bindBtn('btnX', useSkillX);
+        
+        function bindMove(id, k1, k2) {
+            const b = document.getElementById(id);
+            b.addEventListener('touchstart', (e)=>{e.preventDefault(); keys[k1]=true;});
+            b.addEventListener('touchend', (e)=>{e.preventDefault(); keys[k1]=false;});
+            b.addEventListener('mousedown', (e)=>{e.preventDefault(); keys[k1]=true;});
+            b.addEventListener('mouseup', (e)=>{e.preventDefault(); keys[k1]=false;});
+            b.addEventListener('mouseleave', (e)=>{e.preventDefault(); keys[k1]=false;});
+        }
+        bindMove('btnUp','w'); bindMove('btnDown','s'); bindMove('btnLeft','a'); bindMove('btnRight','d');
+
+        function checkKill(target, isBossHit) {
+            if (target.hp <= 0 && !target.dead) {
+                target.dead = true;
+                if (isBossHit) { 
+                    player.xp += 500 * wave; player.beli += 5000 * wave; bossActive = false; boss = null; wave++; enemiesKilledInWave = 0; 
+                } else { 
+                    player.xp += 30 + (wave*10); player.beli += 100 * wave; enemies = enemies.filter(e => e !== target); enemiesKilledInWave++;
+                    if (enemiesKilledInWave >= 5 && !bossActive) {
+                        bossActive = true; let bImg = bossImages[(wave - 1) % bossImages.length];
+                        boss = { x: 400, y: 100, size: 90, img: bImg, baseSpeed: 2 + (wave*0.1), speed: 2 + (wave*0.1), hp: 500 + (wave*600), maxHp: 500 + (wave*600), damage: 15 + (wave*5), name: "Wave "+wave+" Boss", dead: false };
+                    }
+                }
+                if (player.xp >= player.maxXp) { player.level++; player.xp -= player.maxXp; player.maxXp = Math.floor(player.maxXp * 1.5); player.maxHp += 20; player.hp = player.maxHp; player.baseDamage += 5; player.damage = player.baseDamage; if(player.activeFruit && player.activeFruit.buff === "giant") player.damage *= 2; }
+            }
+        }
+
+        setInterval(() => {
+            if (enemies.length < 6 && !gameOver && !bossActive) {
+                enemies.push({ x: Math.random() < 0.5 ? 0 : canvas.width, y: Math.random() * canvas.height, size: 35, img: "🦹", baseSpeed: 1.5 + (wave * 0.2), speed: 1.5 + (wave * 0.2), hp: 50 + (wave * 20), maxHp: 50 + (wave * 20), damage: 5 + (wave * 2), dead: false });
+            }
+        }, 1500);
+
+        function update() {
+            if (gameOver) return;
+
+            let movedX = 0, movedY = 0;
+            if (keys["arrowup"] || keys["w"]) movedY = -1; if (keys["arrowdown"] || keys["s"]) movedY = 1;
+            if (keys["arrowleft"] || keys["a"]) movedX = -1; if (keys["arrowright"] || keys["d"]) movedX = 1;
+
+            let curSpeed = player.speed;
+            if (player.speedBuff > 0) { curSpeed *= 2; player.speedBuff--; }
+
+            if (movedX !== 0 || movedY !== 0) {
+                let length = Math.sqrt(movedX*movedX + movedY*movedY);
+                player.x += (movedX / length) * curSpeed; player.y += (movedY / length) * curSpeed;
+            }
+
+            player.x = Math.max(player.size/2, Math.min(canvas.width - player.size/2, player.x));
+            player.y = Math.max(player.size/2, Math.min(canvas.height - player.size/2, player.y));
+
+            // เก็บผล
+            let fdx = fruitOnGround.x - player.x; let fdy = fruitOnGround.y - player.y;
+            if (Math.sqrt(fdx*fdx + fdy*fdy) < (player.size/2) + (fruitOnGround.size/2)) {
+                player.activeFruit = fruitOnGround.data; player.beli += 1000 * fruitOnGround.data.stars; player.xp += 100;
+                player.size = player.baseSize; player.speed = player.baseSpeed; player.attackRange = player.baseRange; player.damage = player.baseDamage; player.img = player.activeFruit.playerImg;
+                let b = player.activeFruit.buff;
+                if(b==="dmg")player.damage+=20; if(b==="range")player.attackRange+=50; if(b==="speed")player.speed+=4; 
+                if(b==="giant"){player.size=80; player.attackRange+=70; player.damage*=2;} if(b==="dragon"){player.size=85; player.damage*=3; player.speed+=2;}
+                respawnFruit();
+            }
+
+            // โปรเจกไทล์
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                let p = projectiles[i]; p.x += p.dx; p.y += p.dy; p.life--;
+                let hitAny = false; let targets = [...enemies]; if (bossActive && boss) targets.push(boss);
+                for (let t of targets) {
+                    if (p.hitList.includes(t)) continue; // กันโดนรัวๆ ต่อ 1 ลูก
+                    let dx = t.x - p.x; let dy = t.y - p.y;
+                    if (Math.sqrt(dx*dx + dy*dy) < (t.size/2) + (p.size/2)) {
+                        t.hp -= p.damage; p.hitList.push(t); hitAny = true; checkKill(t, t === boss);
+                        if (p.type === "ice") t.speed = Math.max(0.5, t.baseSpeed * 0.4);
+                    }
+                }
+                if ((hitAny && !p.pierce) || p.life <= 0 || p.x < -100 || p.x > canvas.width+100 || p.y < -100 || p.y > canvas.height+100) { projectiles.splice(i, 1); }
+            }
+
+            // มอนสเตอร์
+            [...enemies, bossActive ? boss : null].forEach(enemy => {
+                if (!enemy || enemy.dead) return;
+                enemy.speed = Math.min(enemy.baseSpeed, enemy.speed + 0.01); // ค่อยๆ หายสโลว์
+                let dx = player.x - enemy.x; let dy = player.y - enemy.y; let angle = Math.atan2(dy, dx);
+                enemy.x += Math.cos(angle) * enemy.speed; enemy.y += Math.sin(angle) * enemy.speed;
+                if (Math.sqrt(dx*dx + dy*dy) < (player.size/2) + (enemy.size/2) - 10) player.hp -= enemy.damage / 60;
+            });
+
+            // ลดคูลดาวน์
+            if (player.cdAttack > 0) player.cdAttack--; else isAttacking = false;
+            if (player.cdZ > 0) player.cdZ--;
+            if (player.cdX > 0) player.cdX--;
+            
+            // อัปเดต UI คูลดาวน์
+            document.getElementById('cdZ').style.height = (player.cdZ / player.maxCdZ * 100) + "%";
+            document.getElementById('cdX').style.height = (player.cdX / player.maxCdX * 100) + "%";
+
+            if (player.hp <= 0) gameOver = true;
+        }
+
+        function drawHealth(x, y, hp, maxHp, width) {
+            ctx.fillStyle = "red"; ctx.fillRect(x - width/2, y, width, 5);
+            ctx.fillStyle = "#2ecc71"; ctx.fillRect(x - width/2, y, width * (Math.max(0, hp) / maxHp), 5);
+            ctx.strokeStyle = "black"; ctx.strokeRect(x - width/2, y, width, 5);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (gameOver) { ctx.fillStyle = "red"; ctx.font = "bold 50px Arial"; ctx.fillText("YOU DIED", 400, 300); return; }
+
+            ctx.font = fruitOnGround.size + "px Arial"; ctx.fillText(fruitOnGround.data.emoji, fruitOnGround.x, fruitOnGround.y);
+            ctx.fillStyle = "yellow"; ctx.font = "12px Arial"; ctx.fillText("★".repeat(fruitOnGround.data.stars), fruitOnGround.x, fruitOnGround.y - 20);
+
+            // เอฟเฟกต์
+            for(let i=effects.length-1; i>=0; i--) {
+                ctx.fillStyle = effects[i].color; ctx.beginPath(); ctx.arc(effects[i].x, effects[i].y, effects[i].radius, 0, Math.PI*2); ctx.fill();
+                effects[i].life--; if(effects[i].life<=0) effects.splice(i,1);
+            }
+
+            enemies.forEach(e => { ctx.font = e.size + "px Arial"; ctx.fillText(e.img, e.x, e.y); drawHealth(e.x, e.y - e.size/2 - 10, e.hp, e.maxHp, 30); });
+            projectiles.forEach(p => { ctx.font = p.size + "px Arial"; ctx.fillText(p.emoji, p.x, p.y); });
+
+            if (bossActive && boss) {
+                ctx.font = boss.size + "px Arial"; ctx.fillText(boss.img, boss.x, boss.y);
+                ctx.fillStyle = "red"; ctx.fillRect(200, 30, 400, 15); ctx.fillStyle = "#8e44ad"; ctx.fillRect(200, 30, 400 * (Math.max(0, boss.hp) / boss.maxHp), 15);
+                ctx.strokeStyle = "white"; ctx.strokeRect(200, 30, 400, 15); ctx.fillStyle = "white"; ctx.font = "bold 14px Arial"; ctx.fillText(boss.name, 400, 38);
+            }
+
+            // เลเซอร์ทิศทางเล็ง (ถ้าไม่ได้ตี)
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.2)"; ctx.lineWidth = 2; ctx.beginPath();
+            ctx.moveTo(player.x, player.y); ctx.lineTo(player.x + player.aimDir.x * 100, player.y + player.aimDir.y * 100); ctx.stroke();
+            
+            // วาดตัวละคร
+            ctx.font = player.size + "px Arial"; ctx.fillText(player.img, player.x, player.y);
+            
+            ctx.textAlign = "left"; ctx.fillStyle = "white"; ctx.font = "bold 16px Arial";
+            ctx.fillText("🌊 Wave: " + wave + " | Lv: " + player.level + " | 💰 Beli: " + player.beli, 10, 20);
+            ctx.fillText("Fruit: " + (player.activeFruit ? player.activeFruit.name : "None"), 10, 40);
+            
+            ctx.fillStyle = "red"; ctx.fillRect(10, 50, 150, 10); ctx.fillStyle = "#2ecc71"; ctx.fillRect(10, 50, 150 * (player.hp / player.maxHp), 10);
+            ctx.fillStyle = "gray"; ctx.fillRect(10, 65, 150, 8); ctx.fillStyle = "#f1c40f"; ctx.fillRect(10, 65, 150 * (player.xp / player.maxXp), 8);
+            ctx.textAlign = "center";
+        }
+        function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+        gameLoop();
+    </script>
+</body>
+</html>
