@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blox Fruits 2D - Version 4 (Devil Fruits & Stars!)</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center;
+            background-color: #1a1a1a; color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        h1 { color: #f1c40f; text-shadow: 2px 2px #c0392b; margin-top: 10px; margin-bottom: 5px; }
+        canvas {
+            background-color: #27ae60; /* พื้นหญ้า */
+            border: 5px solid #34495e;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        .instructions {
+            margin-top: 10px; font-size: 0.9rem; text-align: center;
+            background: rgba(255, 255, 255, 0.1); padding: 10px 20px; border-radius: 8px; line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+ 
+    <h1>Blox Fruits 2D (Devil Fruit 🌟 Update)</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    
+    <div class="instructions">
+        🎮 <b>เดิน:</b> W A S D | ⚔️ <b>โจมตี/ยิงพลัง:</b> Spacebar <br>
+        🍎 <b>ผลไม้มี 5 ระดับดาว:</b> 1⭐ (เพิ่มดาเมจ), 2⭐ (วงกว้าง), 3⭐ (ยิงไฟ), 4⭐ (วิ่งไวแสง), 5⭐ (ร่างยักษ์พระ!)
+    </div>
+ 
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+ 
+        // ------------------ ระบบเสียง (Web Audio API) ------------------
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        let audioInitialized = false;
+ 
+        function initAudio() {
+            if (!audioInitialized) {
+                audioCtx = new AudioContext();
+                audioInitialized = true;
+                playSpawnSound();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+ 
+        function playSynth(type, startFreq, endFreq, duration, vol = 0.1) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = type;
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
+            if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, audioCtx.currentTime + duration);
+            
+            gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+ 
+        function playSpawnSound() { playSynth('sine', 300, 800, 0.5, 0.1); }
+        function playPunchSound() { playSynth('square', 150, 50, 0.15, 0.1); }
+        function playFireballSound() { playSynth('sawtooth', 800, 200, 0.2, 0.1); } // เสียงยิงไฟ
+        function playEatFruitSound() { playSynth('triangle', 400, 1200, 0.4, 0.2); } // เสียงกินผลไม้
+        function playEnemyDeathSound() { playSynth('sawtooth', 300, 50, 0.3, 0.1); }
+        function playBossSpawnSound() { playSynth('square', 100, 40, 1.5, 0.2); }
+        function playLevelUpSound() { playSynth('square', 400, 600, 0.4, 0.1); }
+ 
+        // ------------------ ฐานข้อมูลผลปีศาจ (Devil Fruits) ------------------
+        const fruitRoster = [
+            { stars: 1, name: "Chop (สับ)", color: "#bdc3c7", weight: 45, buff: "dmg" },
+            { stars: 2, name: "Smoke (ควัน)", color: "#7f8c8d", weight: 30, buff: "range" },
+            { stars: 3, name: "Flame (ไฟ)", color: "#e74c3c", weight: 15, buff: "shoot" },
+            { stars: 4, name: "Light (แสง)", color: "#f1c40f", weight: 8, buff: "speed" },
+            { stars: 5, name: "Buddha (พระ)", color: "#e67e22", weight: 2, buff: "giant" }
+        ];
+ 
+        // ------------------ ข้อมูลเกม ------------------
+        let gameOver = false;
+        let bossSpawned = false;
+ 
+        const player = {
+            x: 400, y: 300, color: "#3498db",
+            baseSize: 30, baseSpeed: 5, baseRange: 60, baseDamage: 35,
+            size: 30, speed: 5, attackRange: 60, damage: 35,
+            hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 100, beli: 0,
+            activeFruit: null, lastDir: { x: 1, y: 0 } // ทิศทางล่าสุดที่หันหน้า
+        };
+ 
+        let fruitOnGround = { x: 200, y: 200, size: 25, data: fruitRoster[0] };
+        let enemies = [];
+        let projectiles = []; // กระสุนเวทย์/ลูกไฟ
+        let boss = null;
+ 
+        const keys = {};
+        let attackTimer = 0;
+        let isAttacking = false;
+ 
+        // สุ่มผลไม้ด้วยระบบน้ำหนัก (Weight/Gacha)
+        function getRandomFruitData() {
+            let total = fruitRoster.reduce((sum, f) => sum + f.weight, 0);
+            let rand = Math.random() * total;
+            for (let f of fruitRoster) {
+                if (rand < f.weight) return f;
+                rand -= f.weight;
+            }
+            return fruitRoster[0];
+        }
+ 
+        function respawnFruit() {
+            fruitOnGround.x = Math.random() * (canvas.width - 60) + 30;
+            fruitOnGround.y = Math.random() * (canvas.height - 60) + 30;
+            fruitOnGround.data = getRandomFruitData();
+        }
+        respawnFruit(); // สุ่มผลแรก
+ 
+        // ------------------ ระบบควบคุม ------------------
+        window.addEventListener("keydown", (e) => {
+            initAudio();
+            keys[e.key] = true;
+            
+            // การโจมตี
+            if (e.code === "Space" && attackTimer <= 0 && !gameOver) {
+                // ผลแสงตีรัวกว่าปกติ
+                let cooldown = (player.activeFruit && player.activeFruit.buff === "speed") ? 10 : 20;
+                attackTimer = cooldown;
+                isAttacking = true;
+ 
+                if (player.activeFruit && player.activeFruit.buff === "shoot") {
+                    // ผลไฟ: ยิงลูกไฟตามทิศที่หันหน้า
+                    playFireballSound();
+                    projectiles.push({
+                        x: player.x, y: player.y,
+                        dx: player.lastDir.x * 10, dy: player.lastDir.y * 10,
+                        size: 15, color: "#e74c3c", damage: player.damage * 1.5, life: 60
+                    });
+                } else {
+                    // ผลอื่นๆ: โจมตีวงกว้าง (AoE)
+                    playPunchSound();
+                    dealAoEDamage();
+                }
+            }
+        });
+        window.addEventListener("keyup", (e) => { keys[e.key] = false; });
+ 
+        // ------------------ ระบบต่อสู้ ------------------
+        function dealAoEDamage() {
+            let targets = [...enemies];
+            if (boss) targets.push(boss);
+ 
+            for (let i = targets.length - 1; i >= 0; i--) {
+                let t = targets[i];
+                let dx = t.x - player.x;
+                let dy = t.y - player.y;
+                if (Math.sqrt(dx*dx + dy*dy) < player.attackRange + t.size) {
+                    t.hp -= player.damage;
+                    checkKill(t, t === boss);
+                }
+            }
+        }
+ 
+        function checkKill(target, isBoss) {
+            if (target.hp <= 0) {
+                playEnemyDeathSound();
+                if (isBoss) {
+                    gainXp(500); player.beli += 5000; boss = null;
+                } else {
+                    gainXp(30); player.beli += 100;
+                    enemies = enemies.filter(e => e !== target);
+                }
+            }
+        }
+ 
+        function spawnEnemy() {
+            if (enemies.length < 5 && !gameOver) {
+                enemies.push({
+                    x: Math.random() < 0.5 ? 0 : canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: 25, color: "#e67e22", speed: 1.5 + (player.level * 0.2),
+                    hp: 50 + (player.level * 10), maxHp: 50 + (player.level * 10), damage: 5
+                });
+            }
+        }
+        setInterval(spawnEnemy, 2000);
+ 
+        function gainXp(amount) {
+            player.xp += amount;
+            if (player.xp >= player.maxXp) {
+                player.level++;
+                player.xp -= player.maxXp;
+                player.maxXp = Math.floor(player.maxXp * 1.5);
+                player.maxHp += 20;
+                player.hp = player.maxHp;
+                player.baseDamage += 5;
+                applyFruitBuff(); // คำนวณบัฟใหม่
+                playLevelUpSound();
+                
+                // บอสเกิดเลเวล 5
+                if (player.level >= 5 && !bossSpawned) {
+                    bossSpawned = true;
+                    playBossSpawnSound();
+                    boss = { x: 400, y: 100, size: 60, color: "#8e44ad", speed: 2.5, hp: 1000, maxHp: 1000, damage: 15, name: "Gorilla Boss" };
+                }
+            }
+        }
+ 
+        // ประมวลผลบัฟจากผลปีศาจ
+        function applyFruitBuff() {
+            // รีเซ็ตค่ากลับเป็นค่าพื้นฐานก่อน
+            player.size = player.baseSize;
+            player.speed = player.baseSpeed;
+            player.attackRange = player.baseRange;
+            player.damage = player.baseDamage;
+ 
+            if (!player.activeFruit) return;
+ 
+            let buff = player.activeFruit.buff;
+            if (buff === "dmg") player.damage += 20;
+            if (buff === "range") player.attackRange += 50;
+            if (buff === "speed") { player.speed += 4; player.color = "#f1c40f"; }
+            if (buff === "giant") { player.size = 70; player.attackRange += 80; player.damage *= 2; player.color = "#e67e22"; }
+        }
+ 
+        // ------------------ อัปเดตเกมหลัก ------------------
+        function update() {
+            if (gameOver) return;
+ 
+            // เดิน และบันทึกทิศทางล่าสุด (สำหรับยิงลูกไฟ)
+            let movedX = 0, movedY = 0;
+            if (keys["ArrowUp"] || keys["w"]) movedY = -1;
+            if (keys["ArrowDown"] || keys["s"]) movedY = 1;
+            if (keys["ArrowLeft"] || keys["a"]) movedX = -1;
+            if (keys["ArrowRight"] || keys["d"]) movedX = 1;
+ 
+            if (movedX !== 0 || movedY !== 0) {
+                // Normalization ทิศทางไม่ให้เดินเฉียงเร็วเกิน
+                let length = Math.sqrt(movedX*movedX + movedY*movedY);
+                player.lastDir.x = movedX / length;
+                player.lastDir.y = movedY / length;
+                
+                player.x += player.lastDir.x * player.speed;
+                player.y += player.lastDir.y * player.speed;
+            }
+ 
+            // กันตกขอบ
+            player.x = Math.max(player.size/2, Math.min(canvas.width - player.size/2, player.x));
+            player.y = Math.max(player.size/2, Math.min(canvas.height - player.size/2, player.y));
+ 
+            // ชนผลไม้ (กินผลไม้)
+            let fdx = fruitOnGround.x - player.x;
+            let fdy = fruitOnGround.y - player.y;
+            if (Math.sqrt(fdx*fdx + fdy*fdy) < player.size/2 + fruitOnGround.size/2) {
+                playEatFruitSound();
+                player.activeFruit = fruitOnGround.data;
+                player.color = "#3498db"; // รีเซ็ตสีก่อน
+                applyFruitBuff();
+                player.beli += 1000
+มีเมนูบริบท
+
