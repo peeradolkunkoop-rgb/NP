@@ -2,50 +2,71 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ระบบจัดการงานค้าง มือถือ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจัดการงานค้าง</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background: #0f172a; color: #f8fafc; padding: 14px; min-height: 100vh; display: flex; justify-content: center; }
-    .container { width: 100%; max-width: 480px; }
-    h1 { font-size: 18px; text-align: center; margin-bottom: 14px; color: #38bdf8; }
-    .form-box { background: #1e293b; padding: 14px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; border: 1px solid #334155; }
+    body { background: #0f172a; color: #f8fafc; padding: 24px; min-height: 100vh; }
+    .container { width: 100%; max-width: 1100px; margin: 0 auto; }
+    h1 { font-size: clamp(20px, 3vw, 28px); text-align: center; margin-bottom: 20px; color: #38bdf8; }
+    .top-grid { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr); gap: 16px; margin-bottom: 16px; }
+    .form-box, .filter-box, .task-item { background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+    .form-box { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
     input, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 14px; outline: none; }
+    input:focus { border-color: #38bdf8; }
     input[type="date"] { min-height: 45px; }
-    .btn-save { background: #0284c7; border: none; font-weight: bold; cursor: pointer; color: #fff; }
-    .btn-cancel { background: #64748b; border: none; cursor: pointer; display: none; color: #fff; }
+    button { cursor: pointer; transition: opacity .2s, transform .2s; }
+    button:hover { opacity: .9; }
+    button:active { transform: scale(.98); }
+    .btn-save { background: #0284c7; border: none; font-weight: bold; }
+    .btn-cancel { background: #64748b; border: none; display: none; }
     .msg-box { font-size: 12px; color: #f87171; text-align: center; display: none; }
-    .filter-box { background: #1e293b; padding: 12px; border-radius: 10px; margin-bottom: 14px; border: 1px solid #334155; }
-    .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .summary-text { font-size: 13px; color: #38bdf8; font-weight: bold; }
-    .task-item { background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .task-item.done { opacity: 0.5; }
+    .filter-box { padding: 16px; }
+    .filter-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .filter-row input { max-width: 180px; padding: 8px; }
+    .summary-text { font-size: 14px; color: #38bdf8; font-weight: bold; }
+    #taskList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .task-item { padding: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; min-width: 0; }
+    .task-item.done { opacity: .5; }
     .task-item.done .t-title { text-decoration: line-through; }
-    .t-title { font-size: 14px; font-weight: 600; word-break: break-all; }
-    .t-meta { font-size: 12px; color: #94a3b8; margin-top: 4px; }
-    .actions { display: flex; gap: 6px; flex-shrink: 0; margin-left: 8px; }
-    .btn-sm { padding: 8px 10px; font-size: 12px; border-radius: 6px; border: none; cursor: pointer; }
+    .task-info { min-width: 0; }
+    .t-title { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+    .t-meta { font-size: 12px; color: #94a3b8; margin-top: 5px; }
+    .actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-sm { width: auto; padding: 8px 10px; font-size: 12px; border-radius: 6px; border: none; white-space: nowrap; }
     .btn-edit { background: #eab308; color: #000; font-weight: bold; }
     .btn-done { background: #22c55e; color: #000; font-weight: bold; }
     .btn-del { background: #ef4444; color: #fff; }
+    .empty { grid-column: 1 / -1; padding: 28px; text-align: center; color: #94a3b8; background: #1e293b; border: 1px dashed #475569; border-radius: 12px; }
+    @media (max-width: 700px) {
+      body { padding: 14px; }
+      .top-grid, #taskList { grid-template-columns: 1fr; }
+      .filter-row { align-items: stretch; flex-direction: column; }
+      .filter-row input { max-width: none; width: 100%; }
+      .task-item { align-items: stretch; flex-direction: column; }
+      .actions { width: 100%; }
+      .btn-sm { flex: 1; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📋 จัดการงานค้าง (เวอร์ชันมือถือ)</h1>
-    <div class="form-box">
-      <input type="text" id="taskTitle" placeholder="พิมพ์ชื่องาน/การบ้านที่ค้าง...">
-      <input type="date" id="taskDeadline">
-      <div class="msg-box" id="msgBox"></div>
-      <button type="button" class="btn-save" id="saveBtn" onclick="handleSave()">+ บันทึกงานค้าง</button>
-      <button type="button" class="btn-cancel" id="cancelBtn" onclick="cancelEdit()">ยกเลิกการแก้ไข</button>
-    </div>
-    <div class="filter-box">
-      <div class="filter-row">
-        <span style="font-size:12px;">🔍 ดูงานตามวัน:</span>
-        <input type="date" id="filterDate" onchange="renderTasks()" style="width: auto; padding: 6px;">
+    <h1>📋 จัดการงานค้าง</h1>
+    <div class="top-grid">
+      <div class="form-box">
+        <input type="text" id="taskTitle" placeholder="พิมพ์ชื่องาน/การบ้านที่ค้าง...">
+        <input type="date" id="taskDeadline">
+        <div class="msg-box" id="msgBox"></div>
+        <button type="button" class="btn-save" id="saveBtn" onclick="handleSave()">+ บันทึกงานค้าง</button>
+        <button type="button" class="btn-cancel" id="cancelBtn" onclick="cancelEdit()">ยกเลิกการแก้ไข</button>
       </div>
-      <div class="summary-text" id="summaryText">งานค้างทั้งหมด: 0 งาน</div>
+      <div class="filter-box">
+        <div class="filter-row">
+          <span style="font-size:13px;">🔍 ดูงานตามวัน:</span>
+          <input type="date" id="filterDate" onchange="renderTasks()">
+        </div>
+        <div class="summary-text" id="summaryText">งานค้างทั้งหมด: 0 งาน</div>
+      </div>
     </div>
     <div id="taskList"></div>
   </div>
@@ -56,7 +77,7 @@
 
     function loadTasks() {
       try {
-        const data = localStorage.getItem('mobile_tasks_app');
+        const data = localStorage.getItem('responsive_tasks_app');
         if (data) memoryTasks = JSON.parse(data);
       } catch (e) {
         console.warn('Storage blocked, using memory mode');
@@ -64,9 +85,7 @@
     }
 
     function saveStorage() {
-      try {
-        localStorage.setItem('mobile_tasks_app', JSON.stringify(memoryTasks));
-      } catch (e) {}
+      try { localStorage.setItem('responsive_tasks_app', JSON.stringify(memoryTasks)); } catch (e) {}
     }
 
     function showMsg(text) {
@@ -85,24 +104,22 @@
       }
       if (editId !== null) {
         memoryTasks = memoryTasks.map(t => t.id === editId ? { ...t, title, deadline } : t);
-        editId = null;
-        document.getElementById('saveBtn').textContent = '+ บันทึกงานค้าง';
-        document.getElementById('cancelBtn').style.display = 'none';
+        cancelEdit();
       } else {
         memoryTasks.unshift({ id: Date.now(), title, deadline, completed: false });
+        document.getElementById('taskTitle').value = '';
+        document.getElementById('taskDeadline').value = '';
       }
-      document.getElementById('taskTitle').value = '';
-      document.getElementById('taskDeadline').value = '';
       saveStorage();
       renderTasks();
     }
 
     function editTask(id) {
-      const t = memoryTasks.find(x => x.id === id);
-      if (!t) return;
+      const task = memoryTasks.find(t => t.id === id);
+      if (!task) return;
       editId = id;
-      document.getElementById('taskTitle').value = t.title;
-      document.getElementById('taskDeadline').value = t.deadline;
+      document.getElementById('taskTitle').value = task.title;
+      document.getElementById('taskDeadline').value = task.deadline;
       document.getElementById('saveBtn').textContent = '💾 บันทึกการแก้ไข';
       document.getElementById('cancelBtn').style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -131,30 +148,39 @@
     function renderTasks() {
       const list = document.getElementById('taskList');
       const filter = document.getElementById('filterDate').value;
-      list.innerHTML = '';
-      let items = memoryTasks;
-      if (filter) {
-        items = memoryTasks.filter(t => t.deadline === filter);
-      }
+      const items = filter ? memoryTasks.filter(t => t.deadline === filter) : memoryTasks;
       const pending = items.filter(t => !t.completed).length;
-      document.getElementById('summaryText').textContent = filter 
-        ? `งานค้างวันที่ ${filter}: ${pending} งาน` 
+      document.getElementById('summaryText').textContent = filter
+        ? `งานค้างวันที่ ${filter}: ${pending} งาน`
         : `งานค้างทั้งหมด: ${pending} งาน`;
+      list.innerHTML = '';
 
-      items.forEach(t => {
+      if (!items.length) {
+        list.innerHTML = '<div class="empty">ยังไม่มีงานค้างในรายการ</div>';
+        return;
+      }
+
+      items.forEach(task => {
         const div = document.createElement('div');
-        div.className = `task-item ${t.completed ? 'done' : ''}`;
-        div.innerHTML = `
-          <div>
-            <div class="t-title">${t.title}</div>
-            <div class="t-meta">📅 กำหนด: ${t.deadline}</div>
-          </div>
-          <div class="actions">
-            <button type="button" class="btn-sm btn-edit" onclick="editTask(${t.id})">แก้</button>
-            <button type="button" class="btn-sm btn-done" onclick="toggleTask(${t.id})">${t.completed ? 'ทำต่อ' : 'เสร็จ'}</button>
-            <button type="button" class="btn-sm btn-del" onclick="deleteTask(${t.id})">ลบ</button>
-          </div>
+        div.className = `task-item ${task.completed ? 'done' : ''}`;
+        const info = document.createElement('div');
+        info.className = 'task-info';
+        const title = document.createElement('div');
+        title.className = 't-title';
+        title.textContent = task.title;
+        const meta = document.createElement('div');
+        meta.className = 't-meta';
+        meta.textContent = `📅 กำหนด: ${task.deadline}`;
+        info.append(title, meta);
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+        actions.innerHTML = `
+          <button type="button" class="btn-sm btn-edit" onclick="editTask(${task.id})">แก้</button>
+          <button type="button" class="btn-sm btn-done" onclick="toggleTask(${task.id})">${task.completed ? 'ทำต่อ' : 'เสร็จ'}</button>
+          <button type="button" class="btn-sm btn-del" onclick="deleteTask(${task.id})">ลบ</button>
         `;
+        div.append(info, actions);
         list.appendChild(div);
       });
     }
