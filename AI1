@@ -1,0 +1,61 @@
+```html
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f2f5; }
+    .chat-container { width: 100%; max-width: 500px; height: 600px; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+    .chat-header { background: #007bff; color: #fff; padding: 16px; font-weight: bold; text-align: center; }
+    .chat-box { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .message { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.4; }
+    .bot { align-self: flex-start; background: #e9ecef; color: #333; }
+    .user { align-self: flex-end; background: #007bff; color: #fff; }
+    .input-area { display: flex; padding: 12px; border-top: 1px solid #ddd; gap: 8px; }
+    input { flex: 1; padding: 10px 14px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
+    button { padding: 10px 20px; background: #007bff; color: #fff; border: none; border-radius: 20px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">ผู้ช่วยอัจฉริยะ (AI Assistant)</div>
+    <div class="chat-box" id="chatBox">
+      <div class="message bot">สวัสดีครับ มีอะไรให้ผมช่วยเหลือหรือตอบคำถามวันนี้ไหมครับ?</div>
+    </div>
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="พิมพ์คำถามของคุณที่นี่..." onkeypress="if(event.key==='Enter') sendMessage()">
+      <button onclick="sendMessage()">ส่ง</button>
+    </div>
+  </div>
+
+  <script>
+    function sendMessage() {
+      const input = document.getElementById('userInput');
+      const chatBox = document.getElementById('chatBox');
+      if (!input.value.trim()) return;
+
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user';
+      userMsg.textContent = input.value;
+      chatBox.appendChild(userMsg);
+
+      const query = input.value;
+      input.value = '';
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      setTimeout(() => {
+        const botMsg = document.createElement('div');
+        botMsg.className = 'message bot';
+        botMsg.textContent = "รับทราบคำถาม: " + query + " (พร้อมเชื่อมต่อ API AI)";
+        chatBox.appendChild(botMsg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }, 500);
+    }
+  </script>
+</body>
+</html>
+```
