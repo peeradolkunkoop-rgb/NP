@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ความในใจจากพีช ❤️</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 50%, #fecfef 100%);
+            font-family: 'Tahoma', sans-serif, Arial;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* หัวใจลอยตกแต่งเต็มหน้าจอ */
+        .heart-particle {
+            position: absolute;
+            font-size: 24px;
+            animation: floatHeart 5s linear infinite;
+            user-select: none;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.8;
+        }
+
+        @keyframes floatHeart {
+            0% {
+                transform: translateY(105vh) scale(0.4) rotate(0deg);
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-10vh) scale(1.4) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* กล่องการ์ดหลัก */
+        .card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(15px);
+            padding: 35px 30px;
+            border-radius: 35px;
+            box-shadow: 0 20px 40px rgba(255, 75, 92, 0.3), 0 0 25px rgba(255, 255, 255, 0.6);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            z-index: 10;
+            border: 3px solid #ffffff;
+            position: relative;
+        }
+
+        h1 {
+            color: #ff3366;
+            margin-bottom: 8px;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(255, 51, 102, 0.15);
+        }
+
+        .subtitle {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        /* กรอบอิโมจิดุ๊กดิ๊กตรงกลาง */
+        .emoji-container {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 20px auto;
+        }
+
+        .emoji-display {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #fff0f3, #ffe3e8);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(255,75,92,0.25);
+            border: 4px solid #ff4b5c;
+            font-size: 70px;
+            animation: bounceEmoji 2s infinite ease-in-out;
+        }
+
+        @keyframes bounceEmoji {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.05); }
+        }
+
+        .message-box {
+            font-size: 16px;
+            color: #444;
+            margin: 20px 0;
+            min-height: 35px;
+            font-weight: bold;
+            line-height: 1.4;
+        }
+
+        /* ปุ่มเลือกฝั่ง */
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 0;
+            border: none;
+            border-radius: 18px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+        }
+
+        .btn-love {
+            background: linear-gradient(135deg, #ff4b5c, #ff6b81);
+            color: white;
+        }
+
+        .btn-love:hover {
+            transform: scale(1.06);
+            box-shadow: 0 8px 22px rgba(255,75,92,0.4);
+        }
+
+        .btn-not-love {
+            background-color: #f1f1f1;
+            color: #666;
+        }
+
+        .btn-not-love:hover {
+            background-color: #e2e2e2;
+            transform: scale(1.06);
+        }
+
+        /* ปุ่มเริ่มใหม่ */
+        .btn-restart {
+            background: linear-gradient(135deg, #ffb7b2, #ff9994);
+            color: #fff;
+            margin-top: 20px;
+            width: 100%;
+            display: none;
+            padding: 14px 0;
+            border: none;
+            border-radius: 18px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(255,183,178,0.4);
+            transition: all 0.25s ease;
+        }
+
+        .btn-restart:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 20px rgba(255,153,148,0.6);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- สร้างหัวใจลอยตกแต่งแบบเต็มจอด้วย JavaScript -->
+    <script>
+        const heartSymbols = ['❤️', '💖', '💕', '💗', '💓', '✨', '💘'];
+        for (let i = 0; i < 25; i++) {
+            const heart = document.createElement('div');
+            heart.className = 'heart-particle';
+            heart.innerHTML = heartSymbols[Math.floor(Math.random() * heartSymbols.length)];
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 3 + 3) + 's';
+            heart.style.animationDelay = (Math.random() * 5) + 's';
+            heart.style.fontSize = (Math.random() * 20 + 18) + 'px';
+            document.body.appendChild(heart);
+        }
+    </script>
+
+    <div class="card">
+        <h1>ความในใจจากพีช ❤️</h1>
+        <p class="subtitle">เลือกคำตอบให้พีชหน่อยนะจ๊ะคนดี</p>
+        
+        <!-- หน้าอิโมจิตรงกลาง -->
+        <div class="emoji-container">
+            <div class="emoji-display" id="emojiFace">🐱</div>
+        </div>
+
+        <div class="message-box" id="msgText">คุณรักพีชไหมเอ่ย? 💕</div>
+        
+        <!-- ปุ่มฝั่งซ้ายและฝั่งขวา -->
+        <div class="btn-container" id="btnContainer">
+            <button class="btn btn-love" id="loveBtn" onclick="handleLove()">รักนะ ❤️</button>
+            <button class="btn btn-not-love" id="notLoveBtn" onclick="handleNotLove()">ไม่รักหรอก 😜</button>
+        </div>
+
+        <!-- ปุ่มเริ่มใหม่ -->
+        <button class="btn-restart" id="restartBtn" onclick="handleRestart()">🔄 เริ่มใหม่</button>
+    </div>
+
+    <script>
+        // ระบบเสียงสังเคราะห์ Web Audio API
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playTone(freq, type, duration, delay = 0) {
+            initAudio();
+            setTimeout(() => {
+                if (!audioCtx) return;
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            }, delay);
+        }
+
+        // เสียงตอนกดรักนะ (เสียงดนตรีสดใส)
+        function playHappySound() {
+            playTone(523.25, 'sine', 0.15, 0);   // โน้ต C5
+            playTone(659.25, 'sine', 0.15, 100); // โน้ต E5
+            playTone(783.99, 'sine', 0.3, 200);  // โน้ต G5
+        }
+
+        // เสียงตอนกดไม่รักหรอก (เสียงตลก/เศร้าเบาๆ)
+        function playSadSound() {
+            playTone(350, 'sawtooth', 0.2, 0);
+            playTone(280, 'sawtooth', 0.3, 150);
+        }
+
+        // เสียงคลิกทั่วไป
+        function playClickSound() {
+            playTone(600, 'sine', 0.08, 0);
+        }
+
+        let notLoveClickCount = 0;
+
+        // ฟังก์ชันเมื่อกดฝั่งซ้าย (รักนะ)
+        function handleLove() {
+            playHappySound();
+            document.getElementById("emojiFace").innerHTML = "😻";
+            document.getElementById("msgText").innerHTML = "เย้! พีชดีใจที่สุดเลย รักเหมือนกันน้าาا 🥰💖";
+            document.getElementById("btnContainer").style.display = "none";
+            document.getElementById("restartBtn").style.display = "block";
+        }
+
+        // ฟังก์ชันเมื่อกดฝั่งขวา (ไม่รักหรอก)
+        function handleNotLove() {
+            notLoveClickCount++;
+
+            if (notLoveClickCount === 1) {
+                playSadSound();
+                document.getElementById("emojiFace").innerHTML = "🥺";
+                document.getElementById("msgText").innerHTML = "อ๊ะ... พีชเริ่มใจไม่ดีแล้วนะ ลองคิดใหม่อีกทีสิ 😢";
+                document.getElementById("notLoveBtn").innerText = "ใจร้ายจัง 🥺";
+            } 
+            else if (notLoveClickCount === 2) {
+                playSadSound();
+                document.getElementById("emojiFace").innerHTML = "😭";
+                document.getElementById("msgText").innerHTML = "ฮือออ ใจร้ายที่สุด! กดปุ่มนี้ไม่ได้แล้วนะ เลือกซะดีๆ! 💧";
+                document.getElementById("notLoveBtn").innerText = "ฮืออออ 😭";
+            } 
+            else if (notLoveClickCount >= 3) {
+                playClickSound();
+                document.getElementById("emojiFace").innerHTML = "🥰";
+                document.getElementById("msgText").innerHTML = "ห้ามกดปุ่มนั้นแล้วนะ! เหลือทางเลือกเดียวให้กดแล้วล่ะ อิอิ 😉";
+                document.getElementById("notLoveBtn").style.display = "none";
+            }
+        }
+
+        // ฟังก์ชันเริ่มใหม่
+        function handleRestart() {
+            playClickSound();
+            notLoveClickCount = 0;
+            document.getElementById("emojiFace").innerHTML = "🐱";
+            document.getElementById("msgText").innerHTML = "คุณรักพีชไหมเอ่ย? 💕";
+            document.getElementById("btnContainer").style.display = "flex";
+            document.getElementById("notLoveBtn").style.display = "block";
+            document.getElementById("notLoveBtn").innerText = "ไม่รักหรอก 😜";
+            document.getElementById("restartBtn").style.display = "none";
+        }
+    </script>
+
+</body>
+</html>
