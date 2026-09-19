@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>แปลงข้อความผู้ใช้เป็นลิงก์พรีวิว</title>
+    <style>
+        body { font-family: sans-serif; margin: 30px; }
+        textarea { width: 100%; max-width: 500px; padding: 10px; font-size: 16px; }
+        button { padding: 10px 20px; font-size: 16px; background-color: #4CAF50; color: white; border: none; cursor: pointer; margin-top: 10px; }
+        button:hover { background-color: #45a049; }
+        .result-box { margin-top: 15px; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <h2>แปลงข้อความ/HTML เป็นลิงก์พรีวิว</h2>
+    <p>พิมพ์ข้อความหรือแท็ก HTML ที่ต้องการให้แสดงผล:</p>
+    
+    <textarea id="userInput" rows="5" placeholder="ตัวอย่าง: <h1>สวัสดีครับ</h1><p style='color: blue;'>นี่คือข้อความทดสอบพรีวิว</p>"></textarea><br>
+    
+    <button onclick="createPreviewLink()">สร้างลิงก์พรีวิว</button>
+
+    <div id="linkContainer"></div>
+
+    <script>
+        function createPreviewLink() {
+            // 1. ดึงข้อความที่ผู้ใช้กรอกเข้ามา
+            const userContent = document.getElementById('userInput').value;
+            
+            // 2. สร้าง Blob object โดยกำหนดประเภทเป็น 'text/html'
+            const blob = new Blob([userContent], { type: 'text/html' });
+            
+            // 3. สร้าง URL ชั่วคราวสำหรับเชื่อมโยงกับ Blob
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // 4. นำ URL ไปสร้างลิงก์ (<a> tag) ให้ผู้ใช้คลิก
+            const container = document.getElementById('linkContainer');
+            container.innerHTML = `
+                <div class="result-box">
+                    <strong>ลิงก์พร้อมใช้งานแล้ว:</strong><br>
+                    <a href="${blobUrl}" target="_blank">🔗 คลิกเพื่อดูหน้าพรีวิวข้างใน</a>
+                </div>
+            `;
+        }
+    </script>
+
+</body>
+</html>
