@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ระบบสุ่มตัวเลข / Number Random System</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: 'Kanit', 'Prompt', sans-serif;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    color: #0f172a;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .main-container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 28px 24px 32px;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.05);
+    width: 100%;
+    max-width: 520px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.8);
+  }
+
+  /* Stepper */
+  .stepper-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    position: relative;
+    padding: 0 10px;
+  }
+  .stepper-line {
+    position: absolute;
+    top: 21px;
+    left: 15%;
+    right: 15%;
+    height: 4px;
+    background-color: #e2e8f0;
+    border-radius: 4px;
+    z-index: 1;
+  }
+  .stepper-line-progress {
+    position: absolute;
+    top: 21px;
+    left: 15%;
+    height: 4px;
+    background: linear-gradient(90deg, #6366f1, #4f46e5);
+    border-radius: 4px;
+    z-index: 1;
+    width: 0%;
+    transition: width 0.5s cubic-bezier(0.16,1,0.3,1);
+  }
+  .stepper-item {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+  }
+  .stepper-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #cbd5e1;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .stepper-item.active .stepper-circle {
+    background: #6366f1;
+    border-color: #4f46e5;
+    color: #fff;
+    box-shadow: 0 0 20px rgba(99,102,241,0.45);
+    transform: scale(1.12);
+  }
+  .stepper-item.completed .stepper-circle {
+    background: #10b981;
+    border-color: #059669;
+    color: #fff;
+  }
+  .stepper-title {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #64748b;
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+  .stepper-item.active .stepper-title { color: #4f46e5; font-weight: 600; }
+  .stepper-item.completed .stepper-title { color: #10b981; }
+
+  /* Pages */
+  .page-viewport { position: relative; min-height: 320px; }
+  .page-step {
+    display: none;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .page-step.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  h2.title { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+  p.subtitle { color: #64748b; font-size: 0.95rem; margin-bottom: 22px; }
+
+  /* Language buttons */
+  .lang-container { display: flex; flex-direction: column; gap: 14px; margin: 24px 0; }
+  .btn-lang {
+    width: 100%;
+    padding: 16px 20px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 17px;
+    font-weight: 500;
+    border-radius: 14px;
+    border: 2px solid #e2e8f0;
+    background: #ffffff;
+    color: #334155;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.25s ease;
+  }
+  .btn-lang:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.05); }
+  .btn-lang.selected {
+    background: #6366f1;
+    border-color: #4f46e5;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 8px 20px rgba(99,102,241,0.3);
+  }
+
+  /* Settings card */
+  .step1-card {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 22px;
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    text-align: left;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-label { font-size: 15px; font-weight: 500; color: #334155; }
+  .step1-card input[type="number"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #cbd5e1;
+    border-radius: 10px;
+    text-align: center;
+    font-family: 'Kanit', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    outline: none;
+    transition: all 0.25s ease;
+  }
+  .step1-card input[type="number"]:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
+  }
+
+  .warning-badge {
+    display: none;
+    color: #dc2626;
+    background: #ffffff;
+    border: 1.5px solid #dc2626;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .warning-badge.show { display: block; }
+
+  /* Number board */
+  .front-room { margin-bottom: 18px; }
+  .blackboard {
+    background: #1e293b;
+    color: white;
+    padding: 14px;
+    border-radius: 10px;
+    width: 100%;
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+
+  .section-label {
+    font-weight: 600;
+    font-size: 15px;
+    color: #334155;
+    margin: 16px 0 10px;
+    text-align: left;
+  }
+
+  .number-grid {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  .cell {
+    aspect-ratio: 1 / 1;
+    background-color: #f1f5f9;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    transition: all 0.25s ease;
+  }
+  .number-grid.random .cell {
+    background-color: #eef2ff;
+    border-color: #a5b4fc;
+    color: #4338ca;
+  }
+
+  /* Controls */
+  .controls { display: flex; flex-direction: column; gap: 12px; margin-top: 22px; }
+  .btn-group { display: flex; gap: 12px; }
+  .btn-action {
+    flex: 1;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+  .btn-primary { background: #6366f1; color: #fff; box-shadow: 0 4px 14px rgba(99,102,241,0.3); }
+  .btn-primary:hover { background: #4f46e5; }
+  .btn-secondary { background: #e2e8f0; color: #334155; }
+  .btn-secondary:hover { background: #cbd5e1; }
+</style>
+</head>
+<body>
+
+<div class="main-container">
+
+  <!-- Stepper -->
+  <div class="stepper-wrapper">
+    <div class="stepper-line"></div>
+    <div class="stepper-line-progress" id="stepperProgress"></div>
+
+    <div class="stepper-item active" id="stepper-1">
+      <div class="stepper-circle">1</div>
+      <div class="stepper-title">เลือกภาษา /<br>Language</div>
+    </div>
+    <div class="stepper-item" id="stepper-2">
+      <div class="stepper-circle">2</div>
+      <div class="stepper-title">ตั้งค่า /<br>Settings</div>
+    </div>
+    <div class="stepper-item" id="stepper-3">
+      <div class="stepper-circle">3</div>
+      <div class="stepper-title">ผลสุ่ม /<br>Result</div>
+    </div>
+  </div>
+
+  <div class="page-viewport">
+
+    <!-- STEP 1: Language -->
+    <div class="page-step active" id="page-1">
+      <h2 class="title">กรุณาเลือกภาษา / Please Select Language</h2>
+      <p class="subtitle">เลือกภาษาที่ต้องการใช้งานระบบ</p>
+
+      <div class="lang-container">
+        <button class="btn-lang selected" id="langTh" onclick="selectLang('th')">🇹🇭 ภาษาไทย (Thai)</button>
+        <button class="btn-lang" id="langEn" onclick="selectLang('en')">🇬🇧 English</button>
+      </div>
+
+      <div class="controls">
+        <button class="btn-action btn-primary" onclick="goToStep(2)">ถัดไป / Next</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Settings -->
+    <div class="page-step" id="page-2">
+      <h2 class="title">ตั้งค่ารูปแบบตาราง</h2>
+      <p class="subtitle">กำหนดจำนวนแถวและคอลัมน์ (Rows &amp; Columns)</p>
+
+      <div class="step1-card">
+        <div class="form-group">
+          <label class="form-label">จำนวนแถว (Rows):</label>
+          <input type="number" id="rowsInput" min="1" max="20" value="5">
+        </div>
+        <div class="form-group">
+          <label class="form-label">จำนวนคอลัมน์ (Columns):</label>
+          <input type="number" id="colsInput" min="1" max="20" value="6">
+        </div>
+      </div>
+
+      <div class="warning-badge" id="settingsWarning">กรุณากรอกแถวและคอลัมน์ระหว่าง 1 ถึง 20 (Please enter 1–20)</div>
+
+      <div class="controls">
+        <div class="btn-group">
+          <button class="btn-action btn-secondary" onclick="goToStep(1)">ย้อนกลับ (Back)</button>
+          <button class="btn-action btn-primary" onclick="generateResult()">สร้างตารางสุ่ม (Generate)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Result -->
+    <div class="page-step" id="page-3">
+      <h2 class="title">ผลการสุ่มตัวเลข</h2>
+      <p class="subtitle">คลิก "สุ่มอีกครั้ง" เพื่อสลับลำดับใหม่ (Randomize Result)</p>
+
+      <div class="front-room">
+        <div class="blackboard" id="gridInfo">ตาราง 5 × 6 (Rows × Columns)</div>
+      </div>
+
+      <div class="section-label">ลำดับเดิม (Original Order)</div>
+      <div class="number-grid" id="originalGrid"></div>
+
+      <div class="section-label">ลำดับที่สุ่มได้ (Randomized Order)</div>
+      <div class="number-grid random" id="randomGrid"></div>
+
+      <div class="controls">
+        <div class="btn-group">
+          <button class="btn-action btn-secondary" onclick="goToStep(2)">ย้อนกลับ (Back)</button>
+          <button class="btn-action btn-primary" onclick="randomizeAgain()">สุ่มอีกครั้ง (Random Again)</button>
+        </div>
+      </
