@@ -1,98 +1,16 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
- <meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>ระบบจัดที่นั่งห้องเรียน</title>
- <style>
- body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
- h2 { color: #2c3e50; margin-bottom: 5px; }
- .subtitle { color: #7f8c8d; margin-top: 0; margin-bottom: 20px; }
- .blackboard { background-color: #2e4053; color: #fff; width: 100%; max-width: 500px; height: 45px; display: flex; justify-content: center; align-items: center; border-radius: 5px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; letter-spacing: 2px; }
- .classroom-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; max-width: 600px; width: 100%; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
- .desk { background-color: #eaeded; border: 2px dashed #bdc3c7; height: 55px; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; font-weight: bold; color: #7f8c8d; user-select: none; }
- .desk:hover { border-color: #3498db; background-color: #eaf2f8; transform: scale(1.05); }
- .desk.active { background-color: #3498db; border: 2px solid #2980b9; color: #fff; }
- .desk.assigned { background-color: #2ecc71; border: 2px solid #27ae60; color: #fff; animation: popIn 0.3s ease-in-out; }
- @keyframes popIn { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
- .controls { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; max-width: 400px; }
- .status-text { font-size: 16px; color: #2c3e50; font-weight: 500; }
- .status-text span { color: #e74c3c; font-weight: bold; }
- .btn-group { display: flex; gap: 10px; width: 100%; }
- button { flex: 1; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
- .btn-random { background-color: #e67e22; color: white; }
- .btn-random:hover { background-color: #d35400; }
- .btn-random:disabled { background-color: #bdc3c7; cursor: not-allowed; }
- .btn-reset { background-color: #95a5a6; color: white; }
- .btn-reset:hover { background-color: #7f8c8d; }
- @media (max-width: 600px) { .classroom-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px; } .desk { height: 50px; } }
- </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>วันนี้กินอะไรดี?</title>
+  <meta http-equiv="refresh" content="0; url=อาหาร">
+  <script>
+    window.location.replace('อาหาร');
+  </script>
 </head>
 <body>
- <h2>🏫 ระบบจัดที่นั่งห้องเรียน ม.1/11</h2>
- <p class="subtitle">ขั้นตอน: 1. คลิกเลือกตำแหน่งโต๊ะเรียน ➡️ 2. กดสุ่มเลขที่</p>
- <div class="blackboard">🎬 หน้าห้อง / กระดานดำ</div>
- <div class="classroom-grid" id="classroomGrid"></div>
- <div class="controls">
-  <div class="status-text">เลือกที่นั่งแล้ว: <span id="seatCount">0</span> ที่นั่ง</div>
-  <div class="btn-group">
-   <button class="btn-random" id="btnRandom" disabled>🔀 สุ่มเลขที่เข้าที่นั่ง</button>
-   <button class="btn-reset" id="btnReset">🔄 เริ่มใหม่ / ล้างค่า</button>
-  </div>
- </div>
- <script>
- const gridContainer = document.getElementById('classroomGrid');
- const seatCountDisplay = document.getElementById('seatCount');
- const btnRandom = document.getElementById('btnRandom');
- const btnReset = document.getElementById('btnReset');
- const TOTAL_CELLS = 64;
- let selectedSeats = [];
- let isAssigned = false;
- function createGrid() {
-  gridContainer.innerHTML = '';
-  selectedSeats = [];
-  isAssigned = false;
-  btnRandom.disabled = true;
-  seatCountDisplay.innerText = '0';
-  for (let i = 0; i < TOTAL_CELLS; i++) {
-   const desk = document.createElement('div');
-   desk.classList.add('desk');
-   desk.innerText = 'ว่าง';
-   desk.addEventListener('click', () => {
-    if (isAssigned) return;
-    if (desk.classList.contains('active')) {
-     desk.classList.remove('active');
-     desk.innerText = 'ว่าง';
-     selectedSeats = selectedSeats.filter(item => item !== desk);
-    } else {
-     desk.classList.add('active');
-     desk.innerText = 'โต๊ะ';
-     selectedSeats.push(desk);
-    }
-    seatCountDisplay.innerText = selectedSeats.length;
-    btnRandom.disabled = selectedSeats.length === 0;
-   });
-   gridContainer.appendChild(desk);
-  }
- }
- function randomAssignSeats() {
-  if (selectedSeats.length === 0) return;
-  const studentNumbers = Array.from({ length: selectedSeats.length }, (_, i) => i + 1);
-  for (let i = studentNumbers.length - 1; i > 0; i--) {
-   const j = Math.floor(Math.random() * (i + 1));
-   [studentNumbers[i], studentNumbers[j]] = [studentNumbers[j], studentNumbers[i]];
-  }
-  selectedSeats.forEach((desk, index) => {
-   desk.classList.remove('active');
-   desk.classList.add('assigned');
-   desk.innerHTML = `เลขที่<br><span style="font-size:18px;">${studentNumbers[index]}</span>`;
-  });
-  isAssigned = true;
-  btnRandom.disabled = true;
- }
- btnRandom.addEventListener('click', randomAssignSeats);
- btnReset.addEventListener('click', createGrid);
- createGrid();
- </script>
+  กำลังเปิดหน้าอาหาร…
+  <a href="อาหาร">กดที่นี่หากหน้าไม่เปิดอัตโนมัติ</a>
 </body>
 </html>
