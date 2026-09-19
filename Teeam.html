@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจัดที่นั่งห้องเรียน</title>
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .main-container {
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 700px;
+      text-align: center;
+    }
+
+    /* แผงควบคุมจำนวน */
+    .config-panel {
+      background: #f1f5f9;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .config-panel input {
+      width: 65px;
+      padding: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    /* ปุ่มสร้างผัง */
+    .btn-blue {
+      background-color: #2563eb !important;
+      color: white !important;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-blue:hover { background-color: #1d4ed8 !important; }
+
+    /* กระดานดำ */
+    .blackboard {
+      background: #1e293b;
+      color: white;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    /* ตารางที่นั่ง 8x8 (บังคับแสดงผล 100%) */
+    .classroom-grid {
+      display: grid !important;
+      grid-template-columns: repeat(8, 1fr) !important;
+      gap: 8px;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    /* กล่องโต๊ะ */
+    .desk {
+      height: 50px;
+      background-color: #f1f5f9;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 12px;
+      color: #64748b;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* สถานะเมื่อเปิดใช้งาน */
+    .desk.active {
+      background-color: #6366f1 !important;
+      border-color: #4f46e5 !important;
+      color: white !important;
+      font-weight: bold;
+    }
+
+    /* สถานะเมื่อสุ่มเรียบร้อย */
+    .desk.assigned {
+      background-color: #10b981 !important;
+      border-color: #059669 !important;
+      color: white !important;
+      font-weight: bold;
+    }
+
+    .controls { display: flex; flex-direction: column; gap: 12px; }
+    .btn-group { display: flex; gap: 10px; }
+    
+    .btn-action {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-random { background-color: #6366f1; color: white; }
+    .btn-random:disabled { background-color: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+    .btn-reset { background-color: #e2e8f0; color: #0f172a; }
+  </style>
+</head>
+<body>
+
+  <div class="main-container">
+    <h2>🏫 ระบบจัดที่นั่งห้องเรียน ม.1/11</h2>
+    <p style="color:#64748b; font-size: 13px;">กำหนดจำนวน แล้วกดปุ่มสีน้ำเงินเพื่อเปิดใช้งานโต๊ะ</p>
+
+    <!-- ปรับจำนวนนักเรียน -->
+    <div class="config-panel">
+      <label>จำนวนนักเรียน:</label>
+      <input type="number" id="studentCount" value="20" min="1" max="64">
+      <span>คน</span>
+      <button class="btn-blue" onclick="generateSeats()">⚡ สร้างผังที่นั่งอัตโนมัติ</button>
+    </div>
+
+    <div class="blackboard">🖥️ หน้าห้อง / กระดานดำ</div>
+
+    <!-- โต๊ะเรียน 64 ตัว ฝังไว้ตรงๆ ไม่ต้องรอ JS สร้าง -->
+    <div class="classroom-grid" id="classroomGrid">
+      <!-- สร้างกล่องเตรียมไว้ 64 ช่อง -->
+      <script>
+        for (let i = 1; i <= 64; i++) {
+          document.write(`<div class="desk" id="desk-${i}" onclick="toggleSingleDesk(this)">ว่าง</div>`);
+        }
+      </script>
+    </div>
+
+    <div class="controls">
+      <div>เลือกที่นั่งแล้ว: <strong id="selectedCount" style="color:#6366f1;">0</strong> ที่นั่ง</div>
+      <div class="btn-group">
+        <button class="btn-action btn-random" id="btnRandom" onclick="randomAssign()" disabled>🔀 สุ่มเลขที่เข้าที่นั่ง</button>
+        <button class="btn-action btn-reset" onclick="resetAll()">🔄 เริ่มใหม่ / ล้างค่า</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let activeDeskList = [];
+    let isFinished = false;
+
+    // 1. กดปุ่มสีน้ำเงิน "สร้างผังที่นั่งอัตโนมัติ"
+    function generateSeats() {
+      resetAll(); // ล้างค่าเก่า
+
+      let count = parseInt(document.getElementById('studentCount').value) || 1;
+      if (count > 64) count = 64;
+      if (count < 1) count = 1;
+      document.getElementById('studentCount').value = count;
+
+      for (let i = 1; i <= count; i++) {
+        let desk = document.getElementById(`desk-${i}`);
+        if (desk) {
+          desk.classList.add('active');
+          desk.innerText = 'โต๊ะ';
+          activeDeskList.push(desk);
+        }
+      }
+
+      updateUI();
+    }
+
+    // 2. คลิกเลือก/ยกเลิกโต๊ะรายตัว
+    function toggleSingleDesk(desk) {
+      if (isFinished) return;
+
+      if (desk.classList.contains('active')) {
+        desk.classList.remove('active');
+        desk.innerText = 'ว่าง';
+        activeDeskList = activeDeskList.filter(d => d !== desk);
+      } else {
+        desk.classList.add('active');
+        desk.innerText = 'โต๊ะ';
+        activeDeskList.push(desk);
+      }
+
+      updateUI();
+    }
+
+    // 3. สุ่มเลขที่
+    function randomAssign() {
+      if (activeDeskList.length === 0) return;
+
+      let nums = Array.from({ length: activeDeskList.length }, (_, i) => i + 1);
+      
+      // สลับตำแหน่งตัวเลข
+      for (let i = nums.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [nums[i], nums[j]] = [nums[j], nums[i]];
+      }
+
+      activeDeskList.forEach((desk, idx) => {
+        desk.classList.remove('active');
+        desk.classList.add('assigned');
+        desk.innerHTML = `<span style="font-size:9px;">เลขที่</span><br><strong style="font-size:16px;">${nums[idx]}</strong>`;
+      });
+
+      isFinished = true;
+      document.getElementById('btnRandom').disabled = true;
+    }
+
+    // 4. ล้างค่าทั้งหมด
+    function resetAll() {
+      isFinished = false;
+      activeDeskList = [];
+      for (let i = 1; i <= 64; i++) {
+        let desk = document.getElementById(`desk-${i}`);
+        if (desk) {
+          desk.className = 'desk';
+          desk.innerText = 'ว่าง';
+        }
+      }
+      updateUI();
+    }
+
+    function updateUI() {
+      document.getElementById('selectedCount').innerText = activeDeskList.length;
+      document.getElementById('btnRandom').disabled = (activeDeskList.length === 0 || isFinished);
+    }
+
+    // เรียกให้ทำงานทันทีเมื่อเปิดหน้าเว็บ
+    window.onload = function() {
+      generateSeats();
+    };
+  </script>
+
+</body>
+</html>
