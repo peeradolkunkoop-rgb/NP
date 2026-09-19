@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจัดที่นั่งห้องเรียน</title>
+  
+  <!-- ดึง Google Fonts: Kanit & Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- SweetAlert2 สำหรับ Modal แจ้งเตือน -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Kanit', 'Prompt', sans-serif;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      color: #0f172a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .main-container {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 850px;
+      text-align: center;
+    }
+
+    /* สไตล์สำหรับการสลับหน้า */
+    .page-step {
+      display: none;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    .page-step.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* หน้า 1: แบบฟอร์มกรอกข้อมูล */
+    .step1-card {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 24px;
+      margin: 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      text-align: left;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 15px;
+      font-weight: 500;
+      color: #334155;
+    }
+
+    .step1-card input[type="number"] {
+      width: 140px;
+      padding: 10px 14px;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      text-align: center;
+      font-family: 'Kanit', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .step1-card input[type="number"]:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    /* กลุ่มปุ่มตัวเลือก (Option Buttons) */
+    .option-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-option {
+      flex: 1;
+      padding: 10px 16px;
+      border: 2px solid #cbd5e1;
+      background-color: #ffffff;
+      color: #475569;
+      border-radius: 10px;
+      font-family: 'Kanit', sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-option:hover {
+      border-color: #818cf8;
+      color: #1e293b;
+    }
+
+    /* สถานะเมื่อปุ่มถูกเลือก */
+    .btn-option.selected {
+      background-color: #6366f1 !important;
+      border-color: #4f46e5 !important;
+      color: #ffffff !important;
+      font-weight: 600 !important;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    /* หน้า 2: ผังห้อง */
+    .front-room {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 12px;
+    }
+
+    .blackboard {
+      background: #1e293b;
+      color: white;
+      padding: 12px;
+      border-radius: 10px;
+      width: 100%;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(30, 41, 59, 0.2);
+    }
+
+    .teacher-desk-wrapper {
+      width: 100%;
+      display: flex;
+      justify-content: flex-start;
+      padding-left: 5px;
+    }
+
+    .teacher-desk {
+      background-color: #fef3c7;
+      border: 2px solid #f59e0b;
+      color: #92400e;
+      padding: 8px 24px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(245, 158, 11, 0.15);
+    }
+
+    /* ตารางที่นั่ง Dynamic Grid */
+    .classroom-grid {
+      display: grid;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 15px;
+      justify-content: center;
+    }
+
+    /* กล่องโต๊ะ */
+    .desk {
+      height: 52px;
+      background-color: #f1f5f9;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 13px;
+      color: #64748b;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+    }
+
+    .desk:hover {
+      border-color: #94a3b8;
+    }
+
+    .desk.active {
+      background-color: #e0e7ff !important;
+      border-color: #818cf8 !important;
+      color: #312e81 !important;
+      font-weight: 500;
+    }
+
+    .desk.assigned {
+      background-color: #10b981 !important;
+      border-color: #059669 !important;
+      color: white !important;
+      font-weight: 600;
+      box-shadow: 0 3px 8px rgba(16, 185, 129, 0.3);
+      transform: scale(1.02);
+    }
+
+    /* ป้ายเตือนกรณีโต๊ะน้อยกว่านักเรียน */
+    .warning-badge {
+      display: none;
+      color: #dc2626;
+      background-color: #ffffff;
+      border: 1.5px solid #dc2626;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 15px;
+    }
+
+    .warning-badge.show {
+      display: inline-block;
+    }
+
+    /* ควบคุมปุ่มกด */
+    .controls { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
+    .btn-group { display: flex; gap: 10px; }
+    
+    .btn-action {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Kanit', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary { background-color: #6366f1; color: white; flex: 2; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+    .btn-primary:hover { background-color: #4f46e5; }
+    
+    .btn-secondary { background-color: #e2e8f0; color: #0f172a; flex: 1; }
+    .btn-secondary:hover { background-color: #cbd5e1; }
+
+    .btn-success { background-color: #10b981; color: white; flex: 2; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+    .btn-success:hover { background-color: #059669; }
+
+    /* SweetAlert Modal Custom Style */
+    .modern-popup {
+      font-family: 'Kanit', 'Prompt', sans-serif !important;
+      border-radius: 20px !important;
+      padding: 24px !important;
+      border: 3px solid #dc2626 !important;
+      box-shadow: 0 10px 30px rgba(220, 38, 38, 0.35) !important;
+    }
+    .modern-title {
+      font-family: 'Kanit', sans-serif !important;
+      font-weight: 600 !important;
+      font-size: 22px !important;
+      color: #991b1b !important;
+    }
+    .modern-confirm-btn {
+      font-family: 'Kanit', sans-serif !important;
+      border-radius: 10px !important;
+      padding: 10px 24px !important;
+      font-size: 15px !important;
+      font-weight: 500 !important;
+      background-color: #dc2626 !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4) !important;
+      border: none !important;
+    }
+    .modern-icon {
+      border: 3px solid #dc2626 !important;
+      background-color: #fef2f2 !important;
+      box-shadow: 0 0 20px rgba(220, 38, 38, 0.3) !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="main-container">
+
+    <!-- ==================== หน้าที่ 1 (Step 1): กรอกข้อมูล ==================== -->
+    <div id="page1" class="page-step active">
+      <h2 style="font-weight: 600; color: #1e293b;">ระบบจัดที่นั่งห้องเรียน</h2>
+      <p style="color:#64748b; font-size: 14px; margin-top: 4px;">กรุณากรอกข้อมูลและเลือกตัวเลือกเพื่อเริ่มต้นจัดที่นั่ง</p>
+
+      <div class="step1-card">
+        
+        <!-- ข้อ 1. กรอกจำนวนนักเรียน -->
+        <div class="form-group">
+          <label class="form-label" for="studentCount">1. กรอกจำนวนนักเรียน:</label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="number" id="studentCount" placeholder="0" min="1" max="60" oninput="handleStudentCountChange(this)">
+            <span style="font-size: 16px; font-weight: 500;">คน</span>
+          </div>
+        </div>
+
+        <!-- ข้อ 2. เลือกจำนวนที่นั่ง -->
+        <div class="form-group">
+          <label class="form-label">2. เลือกจำนวนที่นั่ง:</label>
+          <div class="option-group" id="seatCapacityGroup">
+            <button type="button" class="btn-option selected" onclick="selectSeatCapacity(40, this)">40</button>
+            <button type="button" class="btn-option" onclick="selectSeatCapacity(50, this)">50</button>
+            <button type="button" class="btn-option" onclick="selectSeatCapacity(60, this)">60</button>
+          </div>
+        </div>
+
+        <!-- ข้อ 3. มีโต๊ะครูหรือไม่? -->
+        <div class="form-group">
+          <label class="form-label">3. มีโต๊ะครูหรือไม่?:</label>
+          <div class="option-group" id="teacherDeskGroup">
+            <button type="button" class="btn-option selected" onclick="selectTeacherDesk(true, this)">ใช่</button>
+            <button type="button" class="btn-option" onclick="selectTeacherDesk(false, this)">ไม่</button>
+          </div>
+        </div>
+
+      </div>
+
+      <button class="btn-action btn-primary" style="width: 100%; font-size: 16px;" onclick="goToPage2()">ถัดไป</button>
+    </div>
+
+    <!-- ==================== หน้าที่ 2 (Step 2): ผังที่นั่งและสุ่ม ==================== -->
+    <div id="page2" class="page-step">
+      <h2 style="font-weight: 600; color: #1e293b;">ผังที่นั่งห้องเรียน</h2>
+      <p style="color:#64748b; font-size: 14px; margin-top: 4px;">คลิกเปิด/ปิดโต๊ะที่ต้องการใช้งาน แล้วกดสุ่มที่นั่ง</p>
+
+      <!-- ส่วนหน้าห้อง (กระดานดำ + โต๊ะครู) -->
+      <div class="front-room">
+        <div class="blackboard">หน้าห้อง / กระดานดำ</div>
+        
+        <div class="teacher-desk-wrapper" id="teacherDeskContainer">
+          <div class="teacher-desk">โต๊ะครู</div>
+        </div>
+      </div>
+
+      <!-- ป้ายเตือน -->
+      <div id="warningBadge" class="warning-badge">⚠️ จำนวนโต๊ะน้อยกว่าจำนวนนักเรียน!</div>
+
+      <!-- ผังที่นั่ง Dynamic Grid -->
+      <div id="classroomGrid" class="classroom-grid"></div>
+
+      <!-- ควบคุมการทำงาน -->
+      <div class="controls">
+        <div class="btn-group">
+          <button class="btn-action btn-secondary" onclick="goToPage1()">ย้อนกลับ</button>
+          <button class="btn-action btn-success" onclick="randomizeSeats()">🎲 สุ่มที่นั่ง</button>
+          <button class="btn-action btn-secondary" onclick="resetSeats()">รีเซ็ต</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ตัวแปรเก็บค่าตั้งต้น
+    let studentData = 0;
+    let selectedCapacity = 40;
+    let hasTeacher = true;
+    let activeDesksMap = {}; // ติดตามสถานะแต่ละโต๊ะ
+
+    function handleStudentCountChange(input) {
+      studentData = parseInt(input.value) || 0;
+    }
+
+    function selectSeatCapacity(capacity, btn) {
+      selectedCapacity = capacity;
+      const buttons = document.querySelectorAll('#seatCapacityGroup .btn-option');
+      buttons.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+
+    function selectTeacherDesk(status, btn) {
+      hasTeacher = status;
+      const buttons = document.querySelectorAll('#teacherDeskGroup .btn-option');
+      buttons.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+
+    function goToPage2() {
+      if (studentData <= 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'กรุณากรอกจำนวนนักเรียน',
+          text: 'โปรดใส่จำนวนนักเรียนมากกว่า 0 ก่อนดำเนินการต่อ',
+          confirmButtonText: 'ตกลง',
+          customClass: {
+            popup: 'modern-popup',
+            title: 'modern-title',
+            confirmButton: 'modern-confirm-btn',
+            icon: 'modern-icon'
+          }
+        });
+        return;
+      }
+
+      // สลับหน้า
+      document.getElementById('page1').classList.remove('active');
+      document.getElementById('page2').classList.add('active');
+
+      // แสดงหรือซ่อนโต๊ะครู
+      const teacherContainer = document.getElementById('teacherDeskContainer');
+      teacherContainer.style.display = hasTeacher ? 'flex' : 'none';
+
+      // สร้างตารางที่นั่ง
+      buildClassroomGrid();
+    }
+
+    function goToPage1() {
+      document.getElementById('page2').classList.remove('active');
+      document.getElementById('page1').classList.add('active');
+    }
+
+    function buildClassroomGrid() {
+      const grid = document.getElementById('classroomGrid');
+      grid.innerHTML = '';
+      activeDesksMap = {};
+
+      // กำหนดจำนวนคอลัมน์ตามความจุ
+      let cols = 5;
+      if (selectedCapacity === 60) cols = 6;
+      grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+      // ตรวจสอบคำเตือนจำนวนโต๊ะน้อยกว่านักเรียน
+      const warning = document.getElementById('warningBadge');
+      if (selectedCapacity < studentData) {
+        warning.classList.add('show');
+      } else {
+        warning.classList.remove('show');
+      }
+
+      for (let i = 1; i <= selectedCapacity; i++) {
+        activeDesksMap[i] = true; // เปิดใช้งานเป็นค่าเริ่มต้น
+
+        const desk = document.createElement('div');
+        desk.className = 'desk active';
+        desk.id = `desk-${i}`;
+        desk.innerText = `โต๊ะ ${i}`;
+        
+        desk.onclick = () => toggleDesk(i);
+        grid.appendChild(desk);
+      }
+    }
+
+    function toggleDesk(id) {
+      const deskEl = document.getElementById(`desk-${id}`);
+      // ถ้านักเรียนถูกสุ่มนั่งไปแล้ว ห้ามปิดโต๊ะ
+      if (deskEl.classList.contains('assigned')) return;
+
+      activeDesksMap[id] = !activeDesksMap[id];
+      if (activeDesksMap[id]) {
+        deskEl.classList.add('active');
+        deskEl.innerText = `โต๊ะ ${id}`;
+      } else {
+        deskEl.classList.remove('active');
+        deskEl.innerText = `ปิด`;
+      }
+    }
+
+    function randomizeSeats() {
+      // เคลียร์ผลการสุ่มเก่า
+      for (let i = 1; i <= selectedCapacity; i++) {
+        const deskEl = document.getElementById(`desk-${i}`);
+        if (activeDesksMap[i]) {
+          deskEl.className = 'desk active';
+          deskEl.innerText = `โต๊ะ ${i}`;
+        }
+      }
+
+      // รวบรวมรายชื่อโต๊ะที่เปิดใช้งานอยู่
+      let activeDeskIds = [];
+      for (let i = 1; i <= selectedCapacity; i++) {
+        if (activeDesksMap[i]) activeDeskIds.push(i);
+      }
+
+      if (activeDeskIds.length < studentData) {
+        Swal.fire({
+          icon: 'error',
+          title: 'ที่นั่งไม่เพียงพอ',
+          text: `คุณมีนักเรียน ${studentData} คน แต่เปิดใช้งานโต๊ะแค่ ${activeDeskIds.length} โต๊ะ กรุณาเปิดโต๊ะเพิ่มหรือลดจำนวนนักเรียน`,
+          confirmButtonText: 'รับทราบ',
+          customClass: {
+            popup: 'modern-popup',
+            title: 'modern-title',
+            confirmButton: 'modern-confirm-btn',
+            icon: 'modern-icon'
+          }
+        });
+        return;
+      }
+
+      // สุ่มเลือกโต๊ะให้ครบจำนวนนักเรียน
+      let shuffledDesks = [...activeDeskIds].sort(() => 0.5 - Math.random());
+      let assignedDesks = shuffledDesks.slice(0, studentData);
+
+      // กำหนดหมายเลขนักเรียน (คนที่ 1, คนที่ 2, ...) ลงในโต๊ะที่สุ่มได้
+      assignedDesks.forEach((deskId, index) => {
+        const deskEl = document.getElementById(`desk-${deskId}`);
+        deskEl.className = 'desk assigned';
+        deskEl.innerText = `นร. ${index + 1}`;
+      });
+
+      Swal.fire({
+        icon: 'success',
+        title: 'สุ่มที่นั่งสำเร็จ!',
+        text: `จัดที่นั่งให้นักเรียนจำนวน ${studentData} คน เรียบร้อยแล้ว`,
+        timer: 1800,
+        showConfirmButton: false,
+        customClass: {
+          popup: 'modern-popup',
+          title: 'modern-title'
+        }
+      });
+    }
+
+    function resetSeats() {
+      buildClassroomGrid();
+    }
+  </script>
+</body>
+</html>
