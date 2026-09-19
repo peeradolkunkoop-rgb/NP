@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>วันนี้กินอะไรดี? - เช้า เที่ยง เย็น (เพิ่มเมนูพิเศษ)</title>
+ <style>
+ body {
+ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+ background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+ margin: 0;
+ padding: 20px;
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ min-height: 100vh;
+ }
+ .container {
+ background: white;
+ padding: 30px;
+ border-radius: 15px;
+ box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+ max-width: 600px;
+ width: 100%;
+ text-align: center;
+ }
+ h1 {
+ color: #333;
+ margin-bottom: 5px;
+ }
+ .time-status {
+ font-size: 0.95em;
+ color: #666;
+ margin-bottom: 20px;
+ font-weight: bold;
+ }
+ .meal-card {
+ background: #f9f9f9;
+ border: 2px solid #e1e1e1;
+ border-radius: 10px;
+ padding: 15px;
+ margin-bottom: 15px;
+ text-align: left;
+ transition: all 0.3s ease;
+ }
+ .meal-card.active {
+ border-color: #ff6b6b;
+ background: #fff5f5;
+ }
+ .meal-card h3 {
+ margin: 0 0 5px 0;
+ color: #333;
+ }
+ .meal-result {
+ font-size: 1.2em;
+ font-weight: bold;
+ color: #ff6b6b;
+ margin-top: 5px;
+ }
+ .btn-group {
+ display: flex;
+ gap: 10px;
+ margin-top: 15px;
+ }
+ .all-btn {
+ background: #ff6b6b;
+ color: white;
+ border: none;
+ padding: 12px 20px;
+ border-radius: 8px;
+ font-size: 1.05em;
+ cursor: pointer;
+ transition: background 0.3s;
+ flex: 1;
+ box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3);
+ }
+ .all-btn:hover {
+ background: #fa5252;
+ }
+ .settings-btn {
+ background: #4a5568;
+ color: white;
+ border: none;
+ padding: 12px 20px;
+ border-radius: 8px;
+ font-size: 1.05em;
+ cursor: pointer;
+ transition: background 0.3s;
+ flex: 1;
+ box-shadow: 0 4px 10px rgba(74, 85, 104, 0.3);
+ }
+ .settings-btn:hover {
+ background: #2d3748;
+ }
+ .settings-panel {
+ display: none;
+ margin-top: 20px;
+ background: #f1f5f9;
+ border-radius: 10px;
+ padding: 15px;
+ text-align: left;
+ max-height: 250px;
+ overflow-y: auto;
+ border: 1px solid #cbd5e1;
+ }
+ .settings-panel.show {
+ display: block;
+ }
+ .settings-panel h4 {
+ margin: 10px 0 5px 0;
+ color: #1e293b;
+ font-size: 1em;
+ }
+ .checkbox-grid {
+ display: grid;
+ grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+ gap: 8px;
+ margin-bottom: 10px;
+ }
+ .checkbox-item {
+ font-size: 0.9em;
+ color: #334155;
+ display: flex;
+ align-items: center;
+ gap: 5px;
+ cursor: pointer;
+ }
+ </style>
+</head>
+<body>
+
+ <div class="container">
+ <h1>🍽️ วันนี้กินอะไรดี?</h1>
+ <div class="time-status" id="timeStatus">กำลังโหลดเวลา...</div>
+
+ <div class="meal-card" id="card-breakfast">
+ <h3>🌅 มื้อเช้า</h3>
+ <div class="meal-result" id="breakfastResult">-</div>
+ </div>
+
+ <div class="meal-card" id="card-lunch">
+ <h3>☀️ มื้อเที่ยง</h3>
+ <div class="meal-result" id="lunchResult">-</div>
+ </div>
+
+ <div class="meal-card" id="card-dinner">
+ <h3>🌙 มื้อเย็น</h3>
+ <div class="meal-result" id="dinnerResult">-</div>
+ </div>
+
+ <div class="btn-group">
+ <button class="all-btn" onclick="randomAllMeals()">🎲 สุ่มใหม่ทั้งหมด</button>
+ <button class="settings-btn" onclick="toggleSettings()">⚙️ เลือกเมนูที่ไม่กิน</button>
+ </div>
+
+ <div class="settings-panel" id="settingsPanel">
+ <strong>💡 ติ๊กเลือกเมนูที่ต้องการให้ "นำมาสุ่ม" (เอาออก = ไม่สุ่ม)</strong>
+ 
+ <h4>🌅 มื้อเช้า</h4>
+ <div class="checkbox-grid" id="bfCheckboxes"></div>
+
+ <h4>☀️ มื้อเที่ยง</h4>
+ <div class="checkbox-grid" id="lunchCheckboxes"></div>
+
+ <h4>🌙 มื้อเย็น</h4>
+ <div class="checkbox-grid" id="dinnerCheckboxes"></div>
+ </div>
+ </div>
+
+ <script>
+ // เพิ่มเมนูใหม่ตามที่คุณต้องการ และเมนูที่ใกล้เคียงกัน
+ const defaultBreakfast = [
+ "โจ๊กหมูสับ", "ข้าวต้มปลา", "ไข่กระทะ", "แซนด์วิชแฮมชีส", 
+ "ปาท่องโก๋ + นมข้น", "ข้าวเหนียวหมูปิ้ง", "อเมริกันเบรกฟาสต์", "ซีเรียลใส่นม",
+ "ไข่ลวก + ขนมปังปิ้ง", "ติ่มซำ / ซาลาเปา", "สลัดโรล", "แพนเค้กน้ำผึ้ง", 
+ "ไข่เจียวเต้าหู้", "ข้าวไข่ข้นแฮมชีส"
+ ];
+
+ const defaultLunch = [
+ "กะเพราไก่ไข่ดาว", "ข้าวมันไก่", "ข้าวหมูแดงหมูกรอบ", "ราดหน้าหมูหมัก", 
+ "บะหมี่เกี๊ยวแห้ง", "ส้มตำ ไก่ย่าง ข้าวเหนียว", "ข้าวผัดกุ้ง", "ยำวุ้นเส้นหมูสับ",
+ "ข้าวขาหมู", "ข้าวซอยไก่", "ขนมจีนน้ำยาปู", "บะหมี่เป็ดย่าง", "สุกี้แห้งหมู",
+ "ผัดผักรวมมิตร + ไก่ทอด", "ผัดบล็อกโคลี่กุ้งสด", "ข้าวหน้าหมูทอดทงคัตสึ", "ผัดกะหล่ำปลีน้ำปลา"
+ ];
+
+ const defaultDinner = [
+ "ชาบู / สุกี้", "หมูกระทะ", "สเต็กเนื้อ/หมู", "แกงเขียวหวานไก่", 
+ "ต้มยำกุ้ง + ข้าวสวย", "ปลากะพงนึ่งมะนาว", "สลัดอกไก่ (สายคลีน)", "ข้าวต้มรอบดึก",
+ "พิซซ่าหน้าชีส", "ยำปลาดุกฟู", "ปลากระพงทอดน้ำปลา", "กุ้งอบวุ้นเส้น", "หอยทอด / ผัดไทย",
+ "ไก่ทอดกรอบๆ + เฟรนฟราย", "นักเก็ตไก่ + เฟรนฟรายชีส", "ข้าวไข่เจียวเต้าหู้ + ไก่ทอด", "สเต็กไก่ทอด + เฟรนฟราย"
+ ];
+
+ function initCheckboxes() {
+ renderCheckboxes('bfCheckboxes', defaultBreakfast, 'bf');
+ renderCheckboxes('lunchCheckboxes', defaultLunch, 'lunch');
+ renderCheckboxes('dinnerCheckboxes', defaultDinner, 'dinner');
+ }
+
+ function renderCheckboxes(containerId, list, prefix) {
+ const container = document.getElementById(containerId);
+ container.innerHTML = '';
+ list.forEach((item, index) => {
+ container.innerHTML += `
+ <label class="checkbox-item">
+ <input type="checkbox" checked value="${item}" id="${prefix}-${index}" onchange="updateMeals()">
+ ${item}
+ </label>
+ `;
+ });
+ }
+
+ function getSelectedItems(prefix, originalList) {
+ const selected = [];
+ originalList.forEach((item, index) => {
+ const checkbox = document.getElementById(`${prefix}-${index}`);
+ if (checkbox && checkbox.checked) {
+ selected.push(item);
+ }
+ });
+ return selected;
+ }
+
+ function getRandomItem(arr) {
+ if (arr.length === 0) return "❌ (ไม่ได้เลือกเมนูเลย)";
+ const randomIndex = Math.floor(Math.random() * arr.length);
+ return arr[randomIndex];
+ }
+
+ function updateMeals() {
+ const activeBreakfast = getSelectedItems('bf', defaultBreakfast);
+ const activeLunch = getSelectedItems('lunch', defaultLunch);
+ const activeDinner = getSelectedItems('dinner', defaultDinner);
+
+ document.getElementById('breakfastResult').innerText = getRandomItem(activeBreakfast);
+ document.getElementById('lunchResult').innerText = getRandomItem(activeLunch);
+ document.getElementById('dinnerResult').innerText = getRandomItem(activeDinner);
+
+ checkCurrentTime();
+ }
+
+ function randomAllMeals() {
+ updateMeals();
+ }
+
+ function toggleSettings() {
+ const panel = document.getElementById('settingsPanel');
+ panel.classList.toggle('show');
+ }
+
+ function checkCurrentTime() {
+ const now = new Date();
+ const hours = now.getHours();
+
+ document.getElementById('card-breakfast').classList.remove('active');
+ document.getElementById('card-lunch').classList.remove('active');
+ document.getElementById('card-dinner').classList.remove('active');
+
+ let statusText = `⏰ เวลาปัจจุบัน: ${now.toLocaleTimeString('th-TH')} — `;
+
+ if (hours >= 5 && hours < 11) {
+ statusText += "🌅 กำลังเข้าสู่ช่วงเวลามื้อเช้า";
+ document.getElementById('card-breakfast').classList.add('active');
+ } else if (hours >= 11 && hours < 16) {
+ statusText += "☀️ กำลังเข้าสู่ช่วงเวลามื้อเที่ยง";
+ document.getElementById('card-lunch').classList.add('active');
+ } else {
+ statusText += "🌙 กำลังเข้าสู่ช่วงเวลามื้อเย็น";
+ document.getElementById('card-dinner').classList.add('active');
+ }
+
+ document.getElementById('timeStatus').innerText = statusText;
+ }
+
+ initCheckboxes();
+ updateMeals();
+ </script>
+
+</body>
+</html>
