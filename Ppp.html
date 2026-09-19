@@ -160,13 +160,13 @@
 </head>
 <body>
   <h2>🏫 ระบบจัดที่นั่งห้องเรียน ม.1/11</h2>
-  <p class="subtitle">คลิกเลือกโต๊ะได้ตามต้องการ แล้วกดสุ่มเลขที่</p>
+  <p class="subtitle">ขั้นตอน: 1. คลิกเลือกตำแหน่งโต๊ะเรียน (สูงสุด 40 ที่) ➡️ 2. กดสุ่มเลขที่</p>
 
   <div class="blackboard">🎬 หน้าห้อง / กระดานดำ</div>
   <div class="classroom-grid" id="classroomGrid"></div>
 
   <div class="controls">
-    <div class="status-text">เลือกที่นั่งแล้ว: <span id="seatCount">0</span> / 48 ที่นั่ง</div>
+    <div class="status-text">เลือกที่นั่งแล้ว: <span id="seatCount">0</span> / 40 ที่นั่ง</div>
     <div class="btn-group">
       <button class="btn-random" id="btnRandom" disabled>🔀 สุ่มเลขที่เข้าที่นั่ง</button>
       <button class="btn-reset" id="btnReset">🔄 เริ่มใหม่ / ล้างค่า</button>
@@ -179,7 +179,8 @@
     const btnRandom = document.getElementById('btnRandom');
     const btnReset = document.getElementById('btnReset');
 
-    const TOTAL_CELLS = 48; // 6 แถว x 8 คอลัมน์
+    const TOTAL_CELLS = 48;
+    const MAX_SEATS = 40;
     let selectedSeats = [];
     let isAssigned = false;
 
@@ -203,7 +204,10 @@
             desk.innerText = 'ว่าง';
             selectedSeats = selectedSeats.filter(item => item !== desk);
           } else {
-            // ไม่จำกัดจำนวนที่เลือก สามารถเลือกได้ครบทุกช่องในผัง
+            if (selectedSeats.length >= MAX_SEATS) {
+              alert('เลือกที่นั่งได้สูงสุดไม่เกิน 40 ที่นั่งครับ');
+              return;
+            }
             desk.classList.add('active');
             desk.innerText = 'โต๊ะ';
             selectedSeats.push(desk);
@@ -220,10 +224,10 @@
     function randomAssignSeats() {
       if (selectedSeats.length === 0) return;
 
-      const studentNumbers = Array.from(
-        { length: selectedSeats.length },
-        (_, index) => index + 1
-      );
+      const studentNumbers = [];
+      for (let i = 1; i <= selectedSeats.length; i++) {
+        studentNumbers.push(i);
+      }
 
       for (let i = studentNumbers.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
