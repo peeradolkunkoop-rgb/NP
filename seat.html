@@ -3,7 +3,7 @@
 <head>
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>ระบบจัดที่นั่งห้องเรียน 1/11</title>
+ <title>ระบบจัดที่นั่งห้องเรียน</title>
  <style>
  body {
  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -46,7 +46,7 @@
  /* ตารางพื้นที่ห้องเรียน */
  .classroom-grid {
  display: grid;
- grid-template-columns: repeat(8, 1fr); /* ปรับเป็น 8 คอลัมน์เพื่อให้จัดรูปห้องได้หลากหลาย */
+ grid-template-columns: repeat(8, 1fr);
  gap: 12px;
  max-width: 600px;
  width: 100%;
@@ -166,17 +166,17 @@
 <body>
 
  <h2>🏫 ระบบจัดที่นั่งห้องเรียน ม.1/11</h2>
- <p class="subtitle">ขั้นตอน: 1. คลิกเลือกตำแหน่งโต๊ะเรียน (สูงสุด 40 ที่) ➡️ 2. กดสุ่มเลขที่</p>
+ <p class="subtitle">ขั้นตอน: 1. คลิกเลือกตำแหน่งโต๊ะเรียนกี่ที่ก็ได้ ➡️ 2. กดสุ่มเลขที่</p>
 
  <!-- หน้าห้องเรียน -->
  <div class="blackboard">🎬 หน้าห้อง / กระดานดำ</div>
 
- <!-- แังผังจำลองขนาด 6x8 ช่อง เพื่อให้เลือกจัดกลุ่มโต๊ะได้อิสระ -->
+ <!-- ผังจำลองช่อง เพื่อให้เลือกจัดกลุ่มโต๊ะได้อิสระ -->
  <div class="classroom-grid" id="classroomGrid"></div>
 
  <!-- ส่วนปุ่มควบคุม -->
  <div class="controls">
- <div class="status-text">เลือกที่นั่งแล้ว: <span id="seatCount">0</span> / 40 ที่นั่ง</div>
+ <div class="status-text">เลือกที่นั่งแล้ว: <span id="seatCount">0</span> ที่นั่ง</div>
 
  <div class="btn-group">
  <button class="btn-random" id="btnRandom" disabled>🔀 สุ่มเลขที่เข้าที่นั่ง</button>
@@ -190,10 +190,9 @@
  const btnRandom = document.getElementById('btnRandom');
  const btnReset = document.getElementById('btnReset');
 
- const TOTAL_CELLS = 48; // ขนาดพื้นที่ห้องทั้งหมด (6 แถว x 8 คอลัมน์)
- const MAX_SEATS = 40; // จำกัดจำนวนนักเรียนไม่เกิน 40 คน
- let selectedSeats = []; // เก็บ Element ของที่นั่งที่ถูกเลือก
- let isAssigned = false; // สถานะว่าสุ่มเลขที่ไปหรือยัง
+ const TOTAL_CELLS = 64; // ขยายขนาดพื้นที่ห้องทั้งหมดเป็น 8 แถว x 8 คอลัมน์
+ let selectedSeats = []; 
+ let isAssigned = false; 
 
  // 1. สร้างตารางจำลองห้องเรียนตอนโหลดหน้าเว็บ
  function createGrid() {
@@ -208,7 +207,7 @@
  desk.classList.add('desk');
  desk.innerText = 'ว่าง';
 
- // ดักจับการคลิกเลือกที่นั่งแบบกำหนดเอง
+ // ดักจับการคลิกเลือกที่นั่ง
  desk.addEventListener('click', () => {
  // ถ้าสุ่มเลขที่ไปแล้ว จะล็อกไม่ให้คลิกเลือกเพิ่มจนกว่าจะกดเริ่มใหม่
  if (isAssigned) return;
@@ -219,11 +218,7 @@
  desk.innerText = 'ว่าง';
  selectedSeats = selectedSeats.filter(item => item !== desk);
  } else {
- // ถ้ายังไม่เคยเลือก -> ตรวจสอบว่าเกิน 40 ที่นั่งหรือยัง
- if (selectedSeats.length >= MAX_SEATS) {
- alert('เลือกที่นั่งได้สูงสุดไม่เกิน 40 ที่นั่งครับ');
- return;
- }
+ // ถ้ายังไม่เคยเลือก -> เปิดใช้งานได้ทันที (ไม่มีจำกัดจำนวน)
  desk.classList.add('active');
  desk.innerText = 'โต๊ะ';
  selectedSeats.push(desk);
@@ -243,9 +238,9 @@
  function randomAssignSeats() {
  if (selectedSeats.length === 0) return;
 
- const studentCount = selectedSeats.length; // จำนวนนักเรียนในห้อง = จำนวนที่นั่งที่เลือก
+ const studentCount = selectedSeats.length; 
 
- // สร้างอาร์เรย์เลขที่นักเรียน เช่น [1, 2, 3, ..., จำนวนคน]
+ // สร้างอาร์เรย์เลขที่นักเรียน
  let studentNumbers = [];
  for (let i = 1; i <= studentCount; i++) {
  studentNumbers.push(i);
@@ -265,7 +260,7 @@
  });
 
  isAssigned = true;
- btnRandom.disabled = true; // ล็อกปุ่มสุ่มเมื่อสุ่มเสร็จแล้ว
+ btnRandom.disabled = true; 
  }
 
  // เชื่อมโยงปุ่มกดกับฟังก์ชันการทำงาน
