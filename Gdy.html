@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>🎮 Arcade & Task Hub</title>
+ <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+ <style>
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ body {
+ font-family: 'Prompt', sans-serif;
+ background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+ color: #ffffff;
+ min-height: 100vh;
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ justify-content: center;
+ padding: 20px;
+ }
+ .container {
+ width: 100%;
+ max-width: 480px;
+ text-align: center;
+ animation: fadeIn 0.8s ease-in-out;
+ }
+ header h1 {
+ font-size: 26px;
+ font-weight: 700;
+ margin-bottom: 6px;
+ background: linear-gradient(90deg, #38bdf8, #c084fc, #f472b6);
+ -webkit-background-clip: text;
+ -webkit-text-fill-color: transparent;
+ }
+ header p { color: #94a3b8; font-size: 13px; margin-bottom: 28px; }
+ .menu-grid { display: flex; flex-direction: column; gap: 16px; }
+ .card {
+ position: relative;
+ display: flex;
+ align-items: center;
+ padding: 16px 20px;
+ background: rgba(30, 41, 59, 0.7);
+ border: 1px solid rgba(255, 255, 255, 0.1);
+ border-radius: 16px;
+ text-decoration: none;
+ color: #ffffff;
+ backdrop-filter: blur(12px);
+ transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+ box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+ overflow: hidden;
+ }
+ .card:hover {
+ transform: translateY(-4px) scale(1.02);
+ border-color: rgba(255, 255, 255, 0.3);
+ box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.7), 0 0 15px rgba(192, 132, 252, 0.2);
+ }
+ .card-icon {
+ font-size: 28px;
+ margin-right: 16px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ width: 48px;
+ height: 48px;
+ border-radius: 12px;
+ background: rgba(255, 255, 255, 0.05);
+ flex-shrink: 0;
+ }
+ .card-content { text-align: left; flex-grow: 1; }
+ .card-title { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+ .card-desc { font-size: 12px; color: #94a3b8; }
+ .badge {
+ font-size: 10px; padding: 4px 8px; border-radius: 20px;
+ font-weight: 600; text-transform: uppercase; flex-shrink: 0;
+ }
+ .badge-mobile { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+ .badge-game { background: rgba(244, 114, 182, 0.15); color: #f472b6; border: 1px solid rgba(244, 114, 182, 0.3); }
+ .badge-seat { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+ .badge-food { background: rgba(251, 146, 60, 0.15); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.3); }
+ .badge-pc { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+ .badge-love { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+ .badge-tool { background: rgba(129, 140, 248, 0.15); color: #818cf8; border: 1px solid rgba(129, 140, 248, 0.3); }
+
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(15px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
+ </style>
+</head>
+<body>
+ <div class="container">
+ <header>
+ <h1>🕹️ ARCADE & TASK HUB</h1>
+ <p>ศูนย์รวมความสนุกและระบบจัดการงานทั้งหมดของคุณ</p>
+ </header>
+
+ <div class="menu-grid">
+ <!-- บอกรัก พีช -->
+ <a href="https://htmlpreview.github.io/?https://github.com/peeradolkunkoop-rgb/NP/blob/main/Tttt.html" class="card" target="_blank">
+ <div class="card-icon">❤️</div>
+ <div class="card-content">
+ <div class="card-title">บอกรัก พีช</div>
+ <div class="card-desc">หน้าเว็บข้อความพิเศษสุดน่ารัก</div>
+ </div>
+ <span class="badge badge-love">Special</span>
+ </a>
+
+ <!-- ระบบจัดการงานค้าง -->
+ <a href="https://share.google/L5VJdet80GoSUo0LO" class="card" target="_blank">
+ <div class="card-icon">📋</div>
+ <div class="card-content">
+ <div class="card-title">ระบบจัดการงานค้าง</div>
+ <div class="card-desc">จัดการเช็คลิสต์และงานต่างๆ</div>
+ </div>
+ <span class="badge badge-mobile">Mobile</span>
+ </a>
+
+ <!-- เกมมือถือ -->
+ <a href="https://htmlpreview.github.io/?https://github.com/peeradolkunkoop-rgb/NP/blob/main/game.html" class="card" target="_blank">
+ <div class="card-icon">🎮</div>
+ <div class="card-content">
+ <div class="card-title">เกมมือถือ</div>
+ <div class="card-desc">สนุกไปกับมินิเกมบนมือถือ</div>
+ </div>
+ <span class="badge badge-game">Playable</span>
+ </a>
+
+ <!-- ระบบจัดที่นั่ง Version มือถือ (จาก Ppp.html) -->
+ <a href="https://htmlpreview.github.io/?https://github.com/peeradolkunkoop-rgb/NP/blob/main/Ppp.html" class="card" target="_blank">
+ <div class="card-icon">📱</div>
+ <div class="card-content">
+ <div class="card-title">ระบบจัดที่นั่ง Version มือถือ</div>
+ <div class="card-desc">จัดการผังที่นั่งสำหรับใช้งานบนมือถือ</div>
+ </div>
+ <span class="badge badge-seat">Mobile</span>
+ </a>
+
+ <!-- ระบบจัดที่นั่งเวอร์ชั่นมือถือ (จาก seat-mobile.html) -->
+ <a href="https://htmlpreview.github.io/?https://github.com/peeradolkunkoop-rgb/NP/blob/main/seat-mobile.html" class="card" target="_blank">
+ <div class="card-icon">📱</div>
+ <div class="card-content">
+ <div class="card-title">ระบบจัดที่นั่งเวอร์ชั่นมือถือ (Seat Mobile)</div>
+ <div class="card-desc">จัดการผังที่นั่งเวอร์ชันมือถือเพิ่มเติม</div>
+ </div>
+ <span class="badge badge-seat">Mobile</span>
+ </a>
+
+ <!-- ระบบอาหาร -->
+ <a href="https://htmlpreview.github.io/?https://github.com/peeradolkunkoop-rgb/NP/blob/main/food.html" class="card" target="_blank">
+ <div class="card-icon">🍲</div>
+ <div class="card-content">
+ <div class="card-title">ระบบอาหาร</div>
+ <div class="card-desc">จัดการรายการหรือข้อมูลอาหาร</div>
+ </div>
+ <span class="badge badge-food">Food</span>
+ </a>
+
+ <!-- ระบบจัดที่นั่งเวอร์ชั่นคอม -->
+ <a href="https://htmlpreview.github.io/?https://github.com/peeradolkunkoop-rgb/NP/blob/main/seat.html" class="card" target="_blank">
+ <div class="card-icon">💻</div>
+ <div class="card-content">
+ <div class="card-title">ระบบจัดที่นั่งเวอร์ชั่นคอม</div>
+ <div class="card-desc">เวอร์ชันสำหรับใช้งานบน Desktop</div>
+ </div>
+ <span class="badge badge-pc">Desktop</span>
+ </a>
+
+ <!-- แปลงโค้ด html เป็น Link -->
+ <a href="https://htmlpreview.github.io/?https://github.com/peeradolkunkoop-rgb/NP/blob/main/Fdtfdmm.html" class="card" target="_blank">
+ <div class="card-icon">🔗</div>
+ <div class="card-content">
+ <div class="card-title">แปลงโค้ด html เป็น Link</div>
+ <div class="card-desc">เครื่องมือแปลงโค้ด HTML เป็นลิงก์พร้อมแชร์</div>
+ </div>
+ <span class="badge badge-tool">Tool</span>
+ </a>
+ </div>
+ </div>
+</body>
+</html>
