@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+ <meta charset="UTF-8">
+ <title>Online Python Compiler (Interpreter) - Programiz</title>
+ <!-- โหลด Pyodide สำหรับรัน Python -->
+ <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+
+ <!-- โหลด CodeMirror -->
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+
+ <style>
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #121824; color: #f8fafc; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+ /* 1. แถบประกาศด้านบนสุด */
+ .promo-banner { background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%); border-bottom: 1px solid #334155; padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+ .promo-text strong { color: #ffffff; font-weight: 600; margin-right: 8px; }
+ .promo-text span { color: #94a3b8; }
+ .btn-become-pro { background-color: #0ea5e9; color: white; border: none; padding: 6px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; }
+ .btn-become-pro:hover { background-color: #0284c7; }
+
+ /* โครงสร้างหลักด้านล่างแบนเนอร์ */
+ .main-layout { display: flex; flex: 1; height: calc(100vh - 41px); }
+
+ /* 2. Sidebar ด้านซ้ายสุด (ตรงตามภาพถ่าย 100%) */
+ .sidebar { width: 55px; background-color: #1a2234; display: flex; flex-direction: column; align-items: center; padding-top: 8px; border-right: 1px solid #2d3748; gap: 4px; overflow-y: auto; }
+ .sidebar::-webkit-scrollbar { width: 0px; }
+
+ .sidebar-icon { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: #cbd5e1; font-size: 15px; font-weight: bold; transition: background 0.2s; position: relative; }
+ .sidebar-icon:hover { background-color: #273548; }
+
+ /* ไอคอน Python ตัวแรกที่เป็นสีฟ้าเด่นตามภาพ */
+ .sidebar-icon.python-active { background-color: #0ea5e9; color: white; }
+
+ /* พื้นที่ทำงานหลักขวา */
+ .workspace-container { flex: 1; display: flex; flex-direction: column; }
+
+ /* 3. Navbar ด้านบน (ปรับฟอนต์โลโก้ Programiz ให้เหมือนเป๊ะ) */
+ .navbar { height: 50px; background-color: #1a2234; border-bottom: 1px solid #2d3748; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+ .logo-area { display: flex; flex-direction: column; }
+ .logo-brand { font-size: 20px; font-weight: 800; color: #ffffff; font-family: system-ui, -apple-system, sans-serif; letter-spacing: -0.5px; }
+ .logo-subtitle { font-size: 11px; color: #94a3b8; margin-top: -3px; font-weight: 500; }
+
+ .btn-pro-outline { background: transparent; border: 1px solid #475569; color: #f8fafc; padding: 5px 12px; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer; }
+ .btn-pro-outline:hover { background-color: #273548; }
+
+ /* 4. แถบควบคุม Editor (main.py, Visualize, Run) */
+ .editor-toolbar { height: 45px; background-color: #1e293b; border-bottom: 1px solid #2d3748; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
+ .tab-main { background-color: #121824; color: #38bdf8; padding: 8px 16px; font-size: 13px; border-top: 2px solid #0ea5e9; border-left: 1px solid #2d3748; border-right: 1px solid #2d3748; display: flex; align-items: center; gap: 6px; }
+
+ .toolbar-actions { display: flex; align-items: center; gap: 10px; }
+ .btn-visualize { background-color: #334155; color: #e2e8f0; border: none; padding: 5px 14px; border-radius: 4px; font-size: 13px; cursor: pointer; font-weight: 500; }
+ .btn-visualize:hover { background-color: #475569; }
+ .btn-run { background-color: #0ea5e9; color: white; border: none; padding: 5px 16px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+ .btn-run:hover { background-color: #0284c7; }
+
+ .tool-icons { display: flex; align-items: center; gap: 12px; margin-left: 10px; color: #94a3b8; font-size: 16px; cursor: pointer; }
+ .tool-icons span:hover { color: #ffffff; }
+
+ /* 5. พื้นที่แบ่งฝั่ง Editor กับ Output */
+ .editor-output-split { flex: 1; display: flex; background-color: #121824; }
+ .pane { flex: 1; display: flex; flex-direction: column; border-right: 1px solid #2d3748; }
+ .pane:last-child { border-right: none; }
+
+ .pane-output-header { padding: 8px 15px; background-color: #1e293b; color: #94a3b8; font-size: 13px; border-bottom: 1px solid #2d3748; }
+
+ /* CodeMirror */
+ .CodeMirror { flex: 1; height: auto !important; font-family: 'Courier New', Courier, monospace; font-size: 14px; background-color: #121824 !important; }
+ .CodeMirror-gutters { background-color: #121824 !important; border-right: 1px solid #2d3748 !important; }
+ .CodeMirror-linenumber { color: #475569 !important; }
+
+ /* Output Box */
+ .output-screen { flex: 1; background-color: #0d111a; color: #4ade80; padding: 15px; font-family: 'Courier New', Courier, monospace; font-size: 14px; overflow-y: auto; white-space: pre-wrap; line-height: 1.5; }
+ </style>
+</head>
+<body>
+
+ <!-- แถบแจ้งเตือนด้านบนสุด -->
+ <div class="promo-banner">
+ <div class="promo-text">
+ <strong>Stop copy pasting code you don't actually understand.</strong> 
+ <span>Build the coding confidence you need to a developer companies will fight for</span>
+ </div>
+ <button class="btn-become-pro">Become a PRO</button>
+ </div>
+
+ <div class="main-layout">
+ <!-- Sidebar ด้านซ้าย (เรียงไอคอนตามภาพถ่ายของคุณ 100%) -->
+ <div class="sidebar">
+ <div class="sidebar-icon python-active" title="Python">🐍</div>
+ <div class="sidebar-icon" title="C">R</div>
+ <div class="sidebar-icon" title="Database">🗄️</div>
+ <div class="sidebar-icon" title="C5">5</div>
+ <div class="sidebar-icon" title="Java">☕</div>
+ <div class="sidebar-icon" title="Flag">🚩</div>
+ <div class="sidebar-icon" title="C">C</div>
+ <div class="sidebar-icon" title="C">C</div>
+ <div class="sidebar-icon" title="C">C</div>
+ <div class="sidebar-icon" title="JavaScript" style="font-size: 12px;">JS</div>
+ <div class="sidebar-icon" title="TypeScript" style="font-size: 12px;">TS</div>
+ </div>
+
+ <div class="workspace-container">
+ <!-- Navbar ด้านบน -->
+ <div class="navbar">
+ <div class="logo-area">
+ <div class="logo-brand">Programiz</div>
+ <div class="logo-subtitle">Python Online Compiler</div>
+ </div>
+ <button class="btn-pro-outline">Programiz PRO &gt;</button>
+ </div>
+
+ <!-- Toolbar เมนูของ Editor -->
+ <div class="editor-toolbar">
+ <div class="tab-main">
+ <span>🐍</span> main.py
+ </div>
+ <div class="toolbar-actions">
+ <button class="btn-visualize">Visualize</button>
+ <button class="btn-run" onclick="runPython()">▶ Run</button>
+ <div class="tool-icons">
+ <span title="Share">🔗</span>
+ <span title="More options">⋮</span>
+ </div>
+ </div>
+ </div>
+
+ <!-- หน้าต่างแบ่งครึ่ง (เขียนโค้ด / แสดงผล) -->
+ <div class="editor-output-split">
+ <!-- ฝั่งซ้าย: ตัวแก้ไขโค้ด -->
+ <div class="pane">
+ <textarea id="code-editor"># Online Python compiler (interpreter) to run Python online.
+# Write Python 3 code in this online editor and run it.
+print("Start small. Ship something.")</textarea>
+ </div>
+
+ <!-- ฝั่งขวา: หน้าจอ Output -->
+ <div class="pane">
+ <div class="pane-output-header">Output</div>
+ <div id="output" class="output-screen">กำลังโหลด Python Environment...</div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <script>
+ // เปิดใช้งาน CodeMirror พร้อมธีมมืด Dracula
+ let editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+ mode: "python",
+ theme: "dracula",
+ lineNumbers: true,
+ indentUnit: 4,
+ autofocus: true
+ });
+
+ let pyodide = null;
+
+ // เริ่มต้นโหลด Pyodide เพื่อให้กดปุ่ม Run แล้วรันโค้ด Python ได้จริงๆ
+ async function initPython() {
+ try {
+ pyodide = await loadPyodide();
+ document.getElementById("output").innerText = "พร้อมใช้งาน! กดปุ่ม Run เพื่อรันโค้ดของคุณ";
+ } catch (err) {
+ document.getElementById("output").innerText = "เกิดข้อผิดพลาดในการโหลด Python: " + err;
+ }
+ }
+ initPython();
+
+ // ฟังก์ชันรันโค้ด Python
+ async function runPython() {
+ if (!pyodide) {
+ alert("ระบบ Python กำลังโหลด กรุณารอสักครู่...");
+ return;
+ }
+ const code = editor.getValue();
+ const outputBox = document.getElementById("output");
+ outputBox.innerText = "กำลังรัน...";
+
+ try {
+ let stdout = "";
+ pyodide.setStdout({ 
+ batched: (msg) => { stdout += msg + "\n"; } 
+ });
+ await pyodide.runPythonAsync(code);
+ outputBox.innerText = stdout || "รันสำเร็จ (ไม่มี Output แสดงผล)";
+ } catch (err) {
+ outputBox.innerText = err;
+ }
+ }
+ </script>
+</body>
+</html>
