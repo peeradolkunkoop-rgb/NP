@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>เขียนโค้ด html ในมือถือ</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- CodeMirror & Dracula Theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    
+    <!-- CodeMirror Hint Addons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: #1e293b;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #60a5fa;
+        }
+
+        .logo span {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            overflow-x: auto;
+            max-width: 100%;
+            padding-bottom: 2px;
+        }
+
+        .toolbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        button {
+            background-color: #334155;
+            color: var(--text-main);
+            border: none;
+            padding: 7px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        button:active { transform: scale(0.96); }
+        button.btn-primary { background-color: var(--accent); }
+        button.btn-danger {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+        button.btn-danger:hover { background-color: var(--danger); color: white; }
+
+        .mobile-tabs {
+            display: none;
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 13px;
+            text-align: center;
+            border-bottom: 2px solid transparent;
+            justify-content: center;
+            border-radius: 0;
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        .workspace {
+            flex: 1;
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .workspace.vertical { flex-direction: column; }
+
+        .pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            min-height: 0;
+            min-width: 0;
+        }
+
+        .pane-header {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        /* แก้ไขปัญหา CodeMirror ไม่แสดงผลด้วยการบังคับความสูงให้เต็มพื้นที่ */
+        .CodeMirror {
+            flex: 1 !important;
+            height: 100% !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        iframe {
+            flex: 1;
+            border: none;
+            background-color: #ffffff;
+            width: 100%;
+            height: 100%;
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background-color: var(--success);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            z-index: 1000;
+            white-space: nowrap;
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            header { padding: 8px 12px; }
+            .logo { font-size: 14px; }
+            .mobile-tabs { display: flex; }
+            .workspace { padding: 8px; }
+            .pane { display: none !important; }
+            .pane.mobile-active { display: flex !important; }
+            #layout-btn { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            📱 เขียนโค้ด html ในมือถือ
+            <span>Live</span>
+        </div>
+        <div class="toolbar">
+            <button onclick="toggleLayout()" id="layout-btn">🔄 สลับมุมมอง</button>
+            <button onclick="copyCode()">📋 คัดลอก</button>
+            <button onclick="resetCode()">🔄 รีเซ็ต</button>
+            <button class="btn-danger" onclick="clearCode()">🗑️ ล้าง</button>
+        </div>
+    </header>
+
+    <div class="mobile-tabs">
+        <button class="tab-btn active" onclick="switchMobileTab('editor')">💻 โค้ด HTML</button>
+        <button class="tab-btn" onclick="switchMobileTab('preview')">👁️ ผลลัพธ์</button>
+    </div>
+
+    <div class="workspace" id="workspace">
+        <div class="pane mobile-active" id="editor-pane">
+            <div class="pane-header">
+                <span>INTELLISENSE EDITOR</span>
+                <span id="char-count">0 ตัวอักษร</span>
+            </div>
+            <textarea id="code-input"></textarea>
+        </div>
+
+        <div class="pane" id="preview-pane">
+            <div class="pane-header">
+                <span>PREVIEW RESULT</span>
+                <span style="color: var(--success);">● Active</span>
+            </div>
+            <iframe id="preview"></iframe>
+        </div>
+    </div>
+
+    <div id="toast">คัดลอกโค้ดเรียบร้อยแล้ว!</div>
+
+    <!-- CodeMirror Scripts & Hints -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closetag.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/xml-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/html-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/css-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/javascript-hint.min.js"></script>
+
+    <script>
+        const editor = CodeMirror.fromTextArea(document.getElementById('code-input'), {
+            mode: 'htmlmixed',
+            theme: 'dracula',
+            lineNumbers: true,
+            autoCloseTags: true,
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            indentUnit: 4,
+            lineWrapping: true,
+            extraKeys: {
+                "Ctrl-Space": "autocomplete"
+            }
+        });
+
+        editor.on("inputRead", function(cm, change) {
+            if (change.text[0] === "<" || /^[a-zA-Z]/.test(change.text[0])) {
+                CodeMirror.commands.autocomplete(cm, null, { completeSingle: false });
+            }
+        });
+
+        const preview = document.getElementById('preview');
+        const workspace = document.getElementById('workspace');
+        const layoutBtn = document.getElementById('layout-btn');
+        const charCount = document.getElementById('char-count');
+        const toast = document.getElementById('toast');
+        const editorPane = document.getElementById('editor-pane');
+        const previewPane = document.getElementById('preview-pane');
+
+        const defaultCode = `<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 100%, #1e293b 0%);
+            color: #f8fafc;
+            text-align: center;
+            padding: 40px;
+            margin: 0;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: inline-block;
+        }
+        h1 { color: #60a5fa; margin-top: 0; }
+        button {
+            background: #3b82f6;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>⚡ IntelliSense Editor</h1>
+        <p>ลองพิมพ์เครื่องหมาย &lt; เพื่อดูรายชื่อแท็กแนะนำ หรือกด Ctrl+Space ได้เลย!</p>
+        <br>
+        <button onclick="alert('ยอดเยี่ยมไปเลย!')">คลิกทดสอบ</button>
+    </div>
+</body>
+</html>`;
+
+        function updatePreview() {
+            const code = editor.getValue();
+            preview.srcdoc = code;
+            charCount.textContent = `${code.length} ตัวอักษร`;
+        }
+
+        editor.setValue(defaultCode);
+        updatePreview();
+        editor.on('change', updatePreview);
+
+        function switchMobileTab(tab) {
+            const tabs = document.querySelectorAll('.tab-btn');
+            tabs.forEach(t => t.classList.remove('active'));
+
+            if (tab === 'editor') {
+                editorPane.classList.add('mobile-active');
+                previewPane.classList.remove('mobile-active');
+                tabs[0].classList.add('active');
+                // หน่วงเวลาเล็กน้อยเพื่อให้ CodeMirror คำนวณขนาดใหม่ได้ถูกต้องหลังจากเปลี่ยนการแสดงผล
+                setTimeout(() => editor.refresh(), 50);
+            } else {
+                editorPane.classList.remove('mobile-active');
+                previewPane.classList.add('mobile-active');
+                tabs[1].classList.add('active');
+            }
+        }
+
+        let isVertical = false;
+        function toggleLayout() {
+            isVertical = !isVertical;
+            if (isVertical) {
+                workspace.classList.add('vertical');
+                layoutBtn.textContent = '🔄 มุมมอง (ซ้าย-ขวา)';
+            } else {
+                workspace.classList.remove('vertical');
+                layoutBtn.textContent = '🔄 มุมมอง (บน-ล่าง)';
+            }
+            setTimeout(() => editor.refresh(), 50);
+        }
+
+        function copyCode() {
+            navigator.clipboard.writeText(editor.getValue()).then(() => {
+                showToast('คัดลอกโค้ดเรียบร้อยแล้ว!');
+            });
+        }
+
+        function clearCode() {
+            if (confirm('คุณต้องการล้างโค้ดทั้งหมดใช่หรือไม่?')) {
+                editor.setValue('');
+                updatePreview();
+                showToast('ล้างโค้ดแล้ว');
+            }
+        }
+
+        function resetCode() {
+            editor.setValue(defaultCode);
+            updatePreview();
+            showToast('รีเซ็ตโค้ดตัวอย่างแล้ว');
+        }
+
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
