@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CYBER_TERMINAL // Colorful Dynamic Template</title>
+    <style>
+        :root {
+            --bg-color: #030712;
+            --terminal-bg: #050b14;
+            --primary-color: #00ff66;
+            --secondary-color: #00bfff;
+            --border-color: #1e3a8a;
+            --text-glow: 0 0 12px rgba(0, 255, 102, 0.6);
+            --box-glow: 0 0 25px rgba(0, 191, 255, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+            overflow-x: hidden;
+        }
+
+        /* เอฟเฟกต์เส้นสแกนไลท์หน้าจอทีวีเก่า (Scanlines) */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 999;
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+        }
+
+        .terminal-window {
+            background-color: var(--terminal-bg);
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: var(--box-glow), 0 0 15px rgba(0, 255, 102, 0.2);
+            overflow: hidden;
+            animation: bootUp 0.8s ease-out;
+        }
+
+        @keyframes bootUp {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .terminal-header {
+            background: #0f172a;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--primary-color);
+        }
+
+        .terminal-title {
+            font-size: 0.8rem;
+            color: var(--secondary-color);
+            letter-spacing: 1px;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #f59e0b; }
+        .dot-green { background: #10b981; }
+
+        .terminal-body {
+            padding: 20px;
+        }
+
+        .prompt-line {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: #020617;
+            border: 1px solid var(--secondary-color);
+            color: #fff;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            outline: none;
+            box-shadow: inset 0 0 5px rgba(0, 191, 255, 0.2);
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: inset 0 0 8px rgba(0, 255, 102, 0.4);
+        }
+
+        /* ปุ่มหลักทั่วไป */
+        button {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: #000;
+            box-shadow: var(--text-glow);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* แผงควบคุมปุ่มขนาดเล็กด้านบน (Mini Action Bar) */
+        .top-mini-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px dashed #1e3a8a;
+            padding-bottom: 10px;
+        }
+
+        .mini-btn {
+            background: transparent;
+            border: 1px solid;
+            padding: 4px 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: auto;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .mini-btn-back {
+            border-color: #f59e0b;
+            color: #f59e0b;
+        }
+        .mini-btn-back:hover {
+            background: #f59e0b;
+            color: #000;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+        }
+
+        .mini-btn-reset {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+        .mini-btn-reset:hover {
+            background: #ef4444;
+            color: #000;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+
+        /* กล่องผลลัพธ์แบบมีสีสันเรืองแสง (Colorful Neon Output) */
+        .console-output {
+            background: linear-gradient(135deg, #020617 0%, #091a28 100%);
+            border: 2px solid;
+            border-image: linear-gradient(45deg, #00ff66, #00bfff, #ec4899, #f59e0b) 1;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            min-height: 150px;
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.6;
+            color: #e2e8f0;
+            margin-top: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.15), inset 0 0 10px rgba(0, 191, 255, 0.1);
+            animation: fadeInColorful 0.4s ease-out;
+        }
+
+        @keyframes fadeInColorful {
+            0% { opacity: 0; transform: translateY(5px); filter: brightness(1.5); }
+            100% { opacity: 1; transform: translateY(0); filter: brightness(1); }
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: var(--primary-color);
+            vertical-align: middle;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .step-section {
+            display: none;
+        }
+        .step-section.active {
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .terminal-window {
+                max-width: 100%;
+            }
+            .terminal-body {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="terminal-window">
+        <div class="terminal-header">
+            <span class="terminal-title" id="terminalTitle">ROOT@COLORFUL-TERMINAL:~# STEP 1</span>
+            <div class="terminal-dots">
+                <div class="dot dot-red"></div>
+                <div class="dot dot-yellow"></div>
+                <div class="dot dot-green"></div>
+            </div>
+        </div>
+        <div class="terminal-body">
+            
+            <!-- ================= PAGE 1 ================= -->
+            <div id="step1" class="step-section active">
+                <div class="prompt-line">TYPE ANY LANGUAGE, WORD OR CHARACTER:</div>
+                <div class="control-group">
+                    <input type="text" id="langInput" value="ภาษาไทย" placeholder="พิมพ์อะไรก็ได้...">
+                </div>
+                <button id="nextBtn" onclick="goToStep2()">NEXT >></button>
+            </div>
+
+            <!-- ================= PAGE 2 ================= -->
+            <div id="step2" class="step-section">
+                
+                <!-- แถบปุ่มขนาดเล็กด้านบน -->
+                <div class="top-mini-bar">
+                    <button class="mini-btn mini-btn-back" id="backBtn" onclick="goBack()"><< BACK</button>
+                    <span id="selectedLangInfo" style="font-size: 0.75rem; color: var(--secondary-color);"></span>
+                    <button class="mini-btn mini-btn-reset" id="resetBtn" onclick="resetApp()">RESET</button>
+                </div>
+
+                <div class="prompt-line" id="promptTargetLabel">ENTER TARGET PASSWORD:</div>
+                <div class="control-group">
+                    <input type="text" id="targetInput" value="Password๑ย๓#🚀" placeholder="พิมพ์รหัสผ่านที่ต้องการ...">
+                </div>
+                
+                <button id="executeBtn" onclick="executeAnalysis()">EXECUTE AUDIT</button>
+
+                <div class="prompt-line" id="promptLogsLabel" style="margin-top: 15px;">AUDIT LOGS:</div>
+                <div class="console-output" id="output">
+                    > ระบบพร้อมวิเคราะห์ข้อมูล...<span class="cursor"></span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let userLangQuery = "";
+        let dynamicExecuteText = "EXECUTE AUDIT";
+
+        function generateDynamicUI(q) {
+            let text = q.trim() || "Template";
+            dynamicExecuteText = `EXECUTE [${text}]`;
+            return {
+                next: `${text} >>`,
+                execute: dynamicExecuteText,
+                back: `<< BACK`,
+                reset: `RESET`,
+                target: `TARGET PASSWORD [${text}]:`,
+                logs: `AUDIT LOGS [${text}]:`
+            };
+        }
+
+        function formatNumberToText(n) {
+            if (n < 1000n) return n.toLocaleString() + " ครั้ง";
+            let str = n.toString();
+            let length = str.length;
+
+            if (length <= 6) {
+                return Number(n).toLocaleString() + " ครั้ง";
+            } else if (length <= 12) {
+                let millions = Number(n / 1000000n);
+                let remainder = Number(n % 1000000n);
+                return `${millions.toLocaleString()} ล้าน ${remainder > 0 ? remainder.toLocaleString() : ''} ครั้ง`;
+            } else if (length <= 18) {
+                let trillions = Number(n / 1000000000000n);
+                let remainder = Number((n % 1000000000000n) / 1000000n);
+                return `${trillions.toLocaleString()} ล้านล้าน ${remainder > 0 ? remainder.toLocaleString() + ' ล้าน' : ''} ครั้ง`;
+            } else {
+                let exponent = length - 1;
+                let leading = str.slice(0, 4);
+                return `ประมาณ ${leading[0]}.${leading.slice(1)} × 10^${exponent} ครั้ง`;
+            }
+        }
+
+        function goToStep2() {
+            userLangQuery = document.getElementById('langInput').value.trim();
+            if (!userLangQuery) {
+                userLangQuery = "Template";
+            }
+
+            let currentUI = generateDynamicUI(userLangQuery);
+            document.getElementById('nextBtn').innerText = currentUI.next;
+            document.getElementById('executeBtn').innerText = currentUI.execute;
+            document.getElementById('backBtn').innerText = currentUI.back;
+            document.getElementById('resetBtn').innerText = currentUI.reset;
+            document.getElementById('promptTargetLabel').innerText = currentUI.target;
+            document.getElementById('promptLogsLabel').innerText = currentUI.logs;
+
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+            document.getElementById('terminalTitle').innerText = "ROOT@COLORFUL-TERMINAL:~# STEP 2";
+            document.getElementById('selectedLangInfo').innerText = `✨ แม่แบบ: [ ${userLangQuery} ]`;
+            document.getElementById('output').innerHTML = `> โหลดแม่แบบ [${userLangQuery}] สำเร็จ.<span class='cursor'></span>`;
+        }
+
+        function goBack() {
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step1').classList.add('active');
+            document.getElementById('terminalTitle').innerText = "ROOT@COLORFUL-TERMINAL:~# STEP 1";
+        }
+
+        function resetApp() {
+            document.getElementById('langInput').value = "ภาษาไทย";
+            document.getElementById('targetInput').value = "Password๑ย๓#🚀";
+            document.getElementById('output').innerHTML = `> รีเซ็ตระบบทั้งหมดสำเร็จ...<span class='cursor'></span>`;
+            goBack();
+        }
+
+        function executeAnalysis() {
+            const target = document.getElementById('targetInput').value;
+            const output = document.getElementById('output');
+            const execBtn = document.getElementById('executeBtn');
+
+            if (!target) {
+                output.innerHTML = "> <span style='color: #ef4444;'>ERROR: กรุณากรอกรหัสผ่านก่อนวิเคราะห์!</span><span class='cursor'></span>";
+                return;
+            }
+
+            // ล็อคปุ่มชั่วคราวและแสดงสถานะกำลังประมวลผล
+            execBtn.disabled = true;
+            execBtn.innerText = "⚡ ANALYZING...";
+            output.innerHTML = `> [!] กำลังประมวลผล Combinatorics ด้วยสีสันสดใส (${userLangQuery})...\n<span class='cursor'></span>`;
+
+            setTimeout(() => {
+                let baseChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?/~`'\"\\กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรฤลวศษสหฬอฮฯะัาำิีึืฺุูเแโใไๅ็่้๊๋์ํ๎๐๑๒๓๔๕๖๗๘๙฿🚀💻🔥✨⭐❤️";
+                let charsetSet = new Set(baseChars.split(''));
+                
+                for (let char of target) {
+                    charsetSet.add(char);
+                }
+
+                const chars = Array.from(charsetSet).join('');
+                const N = BigInt(chars.length);
+                const L = target.length;
+
+                let totalAttempts = 0n;
+
+                let shorterLengthsCount = 0n;
+                let currentPow = N;
+                for (let i = 1; i < L; i++) {
+                    shorterLengthsCount += currentPow;
+                    currentPow *= N;
+                }
+                totalAttempts += shorterLengthsCount;
+
+                let lengthOffset = 0n;
+                for (let i = 0; i < L; i++) {
+                    const char = target[i];
+                    const charIndex = chars.indexOf(char);
+
+                    let multiplier = 1n;
+                    for (let j = 0; j < (L - 1 - i); j++) {
+                        multiplier *= N;
+                    }
+                    lengthOffset += BigInt(charIndex !== -1 ? charIndex : 0) * multiplier;
+                }
+
+                totalAttempts += lengthOffset + 1n;
+                const formattedAttemptsText = formatNumberToText(totalAttempts);
+
+                let hasThai = /[ก-ฮ]/.test(target);
+                let hasEnglish = /[a-zA-Z]/.test(target);
+                let hasDigits = /[0-9๐-๙]/.test(target);
+                let hasSymbols = /[^A-Za-z0-9ก-ฮ๐-๙\s]/.test(target);
+
+                let score = 0;
+                if (L >= 6) score++;
+                if (L >= 10) score++;
+                if (hasEnglish || hasThai) score++;
+                if (hasDigits) score++;
+                if (hasSymbols) score++;
+
+                let securityLevel = "";
+                let colorStyle = "";
+
+                if (L < 6 || score <= 1) {
+                    securityLevel = "⚠️ อ่อนแอมาก (Very Weak)";
+                    colorStyle = "#ef4444";
+                } else if (score === 2 || score === 3) {
+                    securityLevel = "⚡ ปานกลาง (Moderate)";
+                    colorStyle = "#f59e0b";
+                } else if (score === 4) {
+                    securityLevel = "🛡️ แข็งแกร่ง (Strong)";
+                    colorStyle = "#38bdf8";
+                } else {
+                    securityLevel = "🔒 ปลอดภัยสูงสุด (Maximum Security)";
+                    colorStyle = "#4ade80";
+                }
+
+                // แสดงผลลัพธ์แบบมีสีสันเรืองแสง
+                output.innerHTML = `
+                    > <span style="color: #00ff66; text-shadow: 0 0 8px rgba(0,255,102,0.6);">AUDIT COMPLETED [SUCCESS]</span><br>
+                    <span style="color: #38bdf8;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span><br>
+                    ✨ <span style="color: #f472b6;">CUSTOM TEMPLATE:</span> <b style="color: #fff;">${userLangQuery}</b><br>
+                    🎯 <span style="color: #38bdf8;">TARGET:</span> <b style="color: #ffd700;">${target}</b><br>
+                    📏 <span style="color: #a78bfa;">LENGTH:</span> <b style="color: #fff;">${L} Characters</b><br>
+                    🔤 <span style="color: #34d399;">CHARSET SIZE (N):</span> <b style="color: #fff;">${N.toLocaleString()} ตัวอักษร</b><br>
+                    💥 <span style="color: #fb7185;">TOTAL ATTEMPTS:</span> <b style="color: #f43f5e; text-shadow: 0 0 10px rgba(244,63,94,0.6);">${formattedAttemptsText}</b><br>
+                    <span style="font-size: 0.75rem; color: #94a3b8;">(ตัวเลขดิบ: ${totalAttempts.toLocaleString()} ครั้ง)</span><br>
+                    <span style="color: #38bdf8;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span><br>
+                    🛡️ <span style="color: #38bdf8;">SECURITY STATUS:</span><br>
+                    <b style="color: ${colorStyle}; font-size: 0.95rem; text-shadow: 0 0 10px ${colorStyle};">${securityLevel}</b><br>
+                    <br>
+                    <span style="font-size: 0.8rem; color: #cbd5e1;">
+                    • ตรวจพบตัวอักษรภาษา: ${(hasThai || hasEnglish) ? '<span style="color:#4ade80">✅ มี</span>' : '<span style="color:#ef4444">❌ ไม่มี</span>'}<br>
+                    • ตรวจพบตัวเลข (ทุกระบบ): ${hasDigits ? '<span style="color:#4ade80">✅ มี</span>' : '<span style="color:#ef4444">❌ ไม่มี</span>'}<br>
+                    • ตรวจพบอักษรพิเศษ/อีโมจิ: ${hasSymbols ? '<span style="color:#4ade80">✅ มี</span>' : '<span style="color:#ef4444">❌ ไม่มี</span>'}
+                    </span><span class="cursor"></span>
+                `;
+
+                // คืนสถานะปุ่มกลับมาเป็นปกติเหมือนเดิม
+                execBtn.disabled = false;
+                execBtn.innerText = dynamicExecuteText;
+            }, 400);
+        }
+    </script>
+
+</body>
+</html>
