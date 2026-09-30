@@ -1,0 +1,493 @@
+```html
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeHub Enterprise - Central Code Repository & Sharebin</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Highlight.js for Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        code, pre { font-family: 'Fira Code', monospace; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.5); border-radius: 3px; }
+    </style>
+</head>
+<body class="h-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-200">
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        window.firebaseModules = {
+            initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged,
+            getFirestore, collection, doc, setDoc, getDoc, getDocs, onSnapshot
+        };
+    </script>
+
+    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="router.navigate('explore')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
+                    <i data-lucide="code-2" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-brand-600 to-indigo-500 bg-clip-text text-transparent">CodeHub Enterprise</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Secure Global Snippet Repository</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <button onclick="router.navigate('explore')" id="nav-explore" class="px-3.5 py-2 text-sm font-medium rounded-lg transition-colors flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 text-brand-600 dark:text-brand-400">
+                    <i data-lucide="compass" class="w-4 h-4"></i>
+                    <span>Explore Public</span>
+                </button>
+                <button onclick="router.navigate('create')" id="nav-create" class="px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center space-x-2 bg-brand-600 hover:bg-brand-700 text-white shadow-md shadow-brand-600/20">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span>New Snippet</span>
+                </button>
+                <div id="auth-status" class="hidden sm:flex items-center space-x-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="auth-user-id">Connecting...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main App Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-y-auto custom-scrollbar">
+
+        <section id="view-explore" class="space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight">Public Snippet Directory</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Browse, search, and copy code snippets shared by the community worldwide.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="relative flex-1 md:w-72">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
+                        <input type="text" id="search-input" oninput="appState.filterSnippets()" placeholder="Search title, language, or code..." class="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <button onclick="appState.loadSnippets()" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Refresh">
+                        <i data-lucide="refresh-cw" class="w-4 h-4" id="refresh-icon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Snippets Grid -->
+            <div id="snippets-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Loading state placeholder -->
+                <div class="col-span-full py-16 text-center text-slate-400">
+                    <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3"></i>
+                    <p class="text-sm">Loading repository snippets from cloud storage...</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-create" class="hidden space-y-6">
+            <div class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div class="flex items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-800 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Create & Share New Snippet</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Paste your large code block, select the language, and get an instant shareable cloud link.</p>
+                    </div>
+                    <button onclick="router.navigate('explore')" class="text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        <span>Back to Explore</span>
+                    </button>
+                </div>
+
+                <form id="snippet-form" onsubmit="appState.saveSnippet(event)" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium mb-2">Snippet Title / Description</label>
+                            <input type="text" id="snippet-title" required placeholder="e.g., Advanced React Custom Hook for WebSockets" class="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Programming Language</label>
+                            <select id="snippet-lang" class="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <option value="javascript">JavaScript / TypeScript</option>
+                                <option value="python">Python</option>
+                                <option value="html">HTML / XML</option>
+                                <option value="css">CSS / SCSS</option>
+                                <option value="cpp">C / C++</option>
+                                <option value="java">Java</option>
+                                <option value="sql">SQL Database</option>
+                                <option value="json">JSON Config</option>
+                                <option value="markdown">Markdown / Text</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-sm font-medium">Source Code Content</label>
+                            <span class="text-xs text-slate-400">Supports large code bases and multi-line formatting</span>
+                        </div>
+                        <textarea id="snippet-code" required rows="14" placeholder="// Paste your code here..." class="w-full font-mono text-sm p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500 custom-scrollbar"></textarea>
+                    </div>
+
+                    <div class="flex items-center justify-end space-x-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                        <button type="button" onclick="router.navigate('explore')" class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" id="save-btn" class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm shadow-lg shadow-brand-600/30 flex items-center space-x-2 transition-transform active:scale-95">
+                            <i data-lucide="cloud-upload" class="w-4 h-4"></i>
+                            <span>Publish to Cloud</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section id="view-detail" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <button onclick="router.navigate('explore')" class="text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>Back to Directory</span>
+                </button>
+                <div class="flex items-center space-x-3">
+                    <button onclick="appState.copyCurrentCode()" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm font-medium flex items-center space-x-2 transition-colors">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                        <span>Copy Code</span>
+                    </button>
+                    <button onclick="appState.downloadCurrentCode()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium flex items-center space-x-2 transition-colors shadow-md shadow-brand-600/20">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Download File</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span id="detail-lang-badge" class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800 uppercase"></span>
+                            <span class="text-xs text-slate-400" id="detail-date"></span>
+                        </div>
+                        <h2 id="detail-title" class="text-xl sm:text-2xl font-bold tracking-tight"></h2>
+                    </div>
+                    <div class="flex items-center space-x-2 text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
+                        <i data-lucide="fingerprint" class="w-3.5 h-3.5"></i>
+                        <span id="detail-id" class="font-mono"></span>
+                    </div>
+                </div>
+
+                <div class="relative bg-slate-950 p-6 overflow-x-auto custom-scrollbar">
+                    <pre><code id="detail-code-block" class="language-javascript text-sm leading-relaxed"></code></pre>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Custom Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900 dark:bg-slate-800 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center space-x-3 text-sm">
+            <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
+            <span id="toast-message">Action successful!</span>
+        </div>
+    </div>
+
+    <script>
+        // Global App State & Firebase references
+        let db, auth, appId, userId;
+        let allSnippets = [];
+        let currentSnippet = null;
+
+        const router = {
+            navigate: function(viewName, param = null) {
+                document.getElementById('view-explore').classList.add('hidden');
+                document.getElementById('view-create').classList.add('hidden');
+                document.getElementById('view-detail').classList.add('hidden');
+
+                document.getElementById('nav-explore').classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-brand-600', 'dark:text-brand-400');
+                
+                if (viewName === 'explore') {
+                    document.getElementById('view-explore').classList.remove('hidden');
+                    document.getElementById('nav-explore').classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-brand-600', 'dark:text-brand-400');
+                    window.location.hash = '';
+                } else if (viewName === 'create') {
+                    document.getElementById('view-create').classList.remove('hidden');
+                    document.getElementById('snippet-form').reset();
+                    window.location.hash = 'create';
+                } else if (viewName === 'detail' && param) {
+                    document.getElementById('view-detail').classList.remove('hidden');
+                    appState.fetchSnippetById(param);
+                }
+                lucide.createIcons();
+            }
+        };
+
+        const appState = {
+            init: async function() {
+                try {
+                    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+                    appId = typeof __app_id !== 'undefined' ? __app_id : 'codehub-default-app';
+                    
+                    const app = window.firebaseModules.initializeApp(firebaseConfig);
+                    db = window.firebaseModules.getFirestore(app);
+                    auth = window.firebaseModules.getAuth(app);
+
+                    const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                    if (initialToken) {
+                        await window.firebaseModules.signInWithCustomToken(auth, initialToken);
+                    } else {
+                        await window.firebaseModules.signInAnonymously(auth);
+                    }
+
+                    userId = auth.currentUser?.uid || crypto.randomUUID();
+                    document.getElementById('auth-user-id').textContent = `User: ${userId.substring(0, 8)}...`;
+
+                    // Check URL hash for direct routing
+                    const hash = window.location.hash;
+                    if (hash.startsWith('#snippet=')) {
+                        const snippetId = hash.replace('#snippet=', '');
+                        router.navigate('detail', snippetId);
+                    } else if (hash === '#create') {
+                        router.navigate('create');
+                    } else {
+                        router.navigate('explore');
+                    }
+
+                    this.loadSnippets();
+                } catch (err) {
+                    console.error('Initialization error:', err);
+                    showToast('Failed to initialize cloud connection', 'error');
+                }
+            },
+
+            loadSnippets: async function() {
+                if (!db) return;
+                const refreshIcon = document.getElementById('refresh-icon');
+                if (refreshIcon) refreshIcon.classList.add('animate-spin');
+
+                try {
+                    const colRef = window.firebaseModules.collection(db, 'artifacts', appId, 'public', 'data', 'snippets');
+                    const snapshot = await window.firebaseModules.getDocs(colRef);
+                    
+                    allSnippets = [];
+                    snapshot.forEach(docSnap => {
+                        allSnippets.push({ id: docSnap.id, ...docSnap.data() });
+                    });
+
+                    // Sort in memory by createdAt descending (Rule 2 compliant)
+                    allSnippets.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+                    this.renderSnippets(allSnippets);
+                } catch (err) {
+                    console.error('Error loading snippets:', err);
+                    document.getElementById('snippets-grid').innerHTML = `
+                        <div class="col-span-full py-12 text-center text-red-500">
+                            <p>Failed to load snippets. Please try refreshing.</p>
+                        </div>
+                    `;
+                } finally {
+                    if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+                }
+            },
+
+            renderSnippets: function(snippets) {
+                const grid = document.getElementById('snippets-grid');
+                if (snippets.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full py-16 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                            <i data-lucide="file-code" class="w-10 h-10 mx-auto mb-3 opacity-40"></i>
+                            <p class="text-base font-medium">No code snippets found</p>
+                            <p class="text-xs text-slate-500 mt-1">Be the first to publish a code snippet to the cloud repository!</p>
+                            <button onclick="router.navigate('create')" class="mt-4 px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium shadow-md shadow-brand-600/20">Create Snippet</button>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                    return;
+                }
+
+                grid.innerHTML = snippets.map(s => `
+                    <div onclick="appState.openSnippet('${s.id}')" class="group bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-brand-500 dark:hover:border-brand-500 transition-all cursor-pointer flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800 uppercase">${s.language || 'text'}</span>
+                                <span class="text-xs text-slate-400">${new Date(s.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <h3 class="font-bold text-lg group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors line-clamp-1">${s.title}</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 font-mono mt-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl line-clamp-3 border border-slate-100 dark:border-slate-800/80">${escapeHtml(s.code)}</p>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400">
+                            <span class="flex items-center space-x-1">
+                                <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                                <span>${s.author ? s.author.substring(0, 6) + '...' : 'Anonymous'}</span>
+                            </span>
+                            <span class="font-medium text-brand-600 dark:text-brand-400 group-hover:underline flex items-center space-x-1">
+                                <span>View Code</span>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            },
+
+            filterSnippets: function() {
+                const query = document.getElementById('search-input').value.toLowerCase();
+                const filtered = allSnippets.filter(s => 
+                    s.title.toLowerCase().includes(query) || 
+                    s.language.toLowerCase().includes(query) || 
+                    s.code.toLowerCase().includes(query)
+                );
+                this.renderSnippets(filtered);
+            },
+
+            saveSnippet: async function(e) {
+                e.preventDefault();
+                const title = document.getElementById('snippet-title').value;
+                const language = document.getElementById('snippet-lang').value;
+                const code = document.getElementById('snippet-code').value;
+                const saveBtn = document.getElementById('save-btn');
+
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Publishing...</span>`;
+                lucide.createIcons();
+
+                try {
+                    const snippetId = 'snip_' + Math.random().toString(36).substring(2, 10);
+                    const docRef = window.firebaseModules.doc(db, 'artifacts', appId, 'public', 'data', 'snippets', snippetId);
+                    
+                    const payload = {
+                        id: snippetId,
+                        title,
+                        language,
+                        code,
+                        author: userId,
+                        createdAt: new Date().toISOString()
+                    };
+
+                    await window.firebaseModules.setDoc(docRef, payload);
+                    showToast('Snippet successfully published to the cloud!');
+                    router.navigate('detail', snippetId);
+                    this.loadSnippets();
+                } catch (err) {
+                    console.error('Error saving snippet:', err);
+                    showToast('Error publishing snippet. Try again.', 'error');
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = `<i data-lucide="cloud-upload" class="w-4 h-4"></i><span>Publish to Cloud</span>`;
+                    lucide.createIcons();
+                }
+            },
+
+            openSnippet: function(id) {
+                window.location.hash = `snippet=${id}`;
+                router.navigate('detail', id);
+            },
+
+            fetchSnippetById: async function(id) {
+                try {
+                    const docRef = window.firebaseModules.doc(db, 'artifacts', appId, 'public', 'data', 'snippets', id);
+                    const docSnap = await window.firebaseModules.getDoc(docRef);
+
+                    if (docSnap.exists()) {
+                        currentSnippet = docSnap.data();
+                        document.getElementById('detail-title').textContent = currentSnippet.title;
+                        document.getElementById('detail-lang-badge').textContent = currentSnippet.language;
+                        document.getElementById('detail-date').textContent = new Date(currentSnippet.createdAt).toLocaleString();
+                        document.getElementById('detail-id').textContent = currentSnippet.id;
+                        
+                        const codeBlock = document.getElementById('detail-code-block');
+                        codeBlock.className = `language-${currentSnippet.language} text-sm leading-relaxed`;
+                        codeBlock.textContent = currentSnippet.code;
+                        hljs.highlightElement(codeBlock);
+                    } else {
+                        showToast('Snippet not found or has been deleted.', 'error');
+                        router.navigate('explore');
+                    }
+                } catch (err) {
+                    console.error('Error fetching snippet:', err);
+                    showToast('Failed to retrieve snippet.', 'error');
+                    router.navigate('explore');
+                }
+            },
+
+            copyCurrentCode: function() {
+                if (!currentSnippet) return;
+                const textArea = document.createElement('textarea');
+                textArea.value = currentSnippet.code;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('Code copied to clipboard!');
+                } catch (err) {
+                    showToast('Failed to copy code', 'error');
+                }
+                document.body.removeChild(textArea);
+            },
+
+            downloadCurrentCode: function() {
+                if (!currentSnippet) return;
+                const extensions = { javascript: 'js', python: 'py', html: 'html', css: 'css', cpp: 'cpp', java: 'java', sql: 'sql', json: 'json', markdown: 'md' };
+                const ext = extensions[currentSnippet.language] || 'txt';
+                const filename = `${currentSnippet.title.toLowerCase().replace(/[^a-z0-9]/g, '_')}.${ext}`;
+                
+                const blob = new Blob([currentSnippet.code], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast(`Downloaded ${filename}`);
+            }
+        };
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 3500);
+        }
+
+        window.onload = function() {
+            lucide.createIcons();
+            appState.init();
+        };
+    </script>
+</body>
+</html>
+```
