@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Code Hub - ศูนย์รวมโค้ด HTML สาธารณะระดับโลก</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Monkey Code Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -12,264 +11,176 @@
             theme: {
                 extend: {
                     colors: {
-                        darker: '#0f172a',
-                        card: '#1e293b'
+                        jungle: '#0f172a',
+                        banana: '#facc15',
+                        monkey: '#f97316',
+                        moss: '#14532d',
+                        card: '#1f2937'
                     }
                 }
             }
         }
     </script>
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK Compat -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Prompt:wght@300;400;500;600&display=swap');
-        body { font-family: 'Prompt', sans-serif; background-color: #0f172a; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; margin: 0; }
-        code, pre, textarea { font-family: 'Fira Code', monospace; }
-        /* Fallback CSS เผื่อกรณี CDN โหลดไม่ติด */
-        .fallback-card { background-color: #1e293b; border: 1px solid #334155; border-radius: 1rem; padding: 1.25rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); }
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+        .monkey-glow {
+            box-shadow: 0 0 30px rgba(250, 204, 21, 0.18);
+        }
     </style>
 </head>
-<body class="bg-darker text-slate-100 min-h-screen flex flex-col justify-between">
-
-    <!-- Header -->
+<body class="bg-jungle text-slate-100 min-h-screen">
     <header class="bg-slate-900 border-b border-slate-800 shadow-md py-4 px-6 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <div class="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/30">
-                    <i class="fa-solid fa-globe text-xl"></i>
-                </div>
+                <div class="bg-amber-400 p-3 rounded-2xl text-2xl monkey-glow">🐵</div>
                 <div>
-                    <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">Global Code Hub</h1>
-                    <p class="text-xs text-slate-400">ศูนย์รวมโค้ดสาธารณะจากทั่วโลก แชร์และหยิบไปรันได้ทันที</p>
+                    <h1 class="text-2xl font-bold bg-gradient-to-r from-amber-300 via-orange-400 to-emerald-400 bg-clip-text text-transparent">Monkey Code Hub</h1>
+                    <p class="text-xs text-slate-400">คลังโค้ดลิงสุดเก๋า แชร์และหยิบไปแก้ไขได้ทันที</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="switchTab('feed')" id="btn-feed" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl transition shadow-lg shadow-indigo-600/20 flex items-center gap-2">
-                    <i class="fa-solid fa-layer-group"></i> คลังโค้ดสาธารณะ (<span id="total-count">0</span>)
+                <button onclick="switchTab('feed')" id="btn-feed" class="px-4 py-2 bg-amber-400 text-slate-900 text-sm font-bold rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group"></i> คลังลิง (<span id="total-count">0</span>)
                 </button>
                 <button onclick="switchTab('submit')" id="btn-submit" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-xl transition border border-slate-700 flex items-center gap-2">
-                    <i class="fa-solid fa-plus-circle text-emerald-400"></i> ส่งโค้ดขึ้นระบบ
-                </button>
-                <button onclick="openConfigModal()" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 transition" title="ตั้งค่าฐานข้อมูล Firebase">
-                    <i class="fa-solid fa-gear"></i>
+                    <i class="fa-solid fa-plus-circle text-emerald-400"></i> ส่งโค้ดลิง
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="max-w-7xl w-full mx-auto p-4 sm:p-6 flex-grow">
-        
-        <!-- TAB 1: GLOBAL FEED (คลังโค้ดสาธารณะ) -->
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 flex-grow">
         <section id="tab-feed" class="space-y-6">
-            <!-- Search & Filter Bar -->
-            <div class="flex flex-col sm:flex-row gap-3 justify-between items-center bg-card p-4 rounded-2xl border border-slate-800 shadow-xl fallback-card">
+            <div class="flex flex-col sm:flex-row gap-3 justify-between items-center bg-card p-4 rounded-2xl border border-slate-800 shadow-xl">
                 <div class="relative w-full sm:w-96">
                     <i class="fa-solid fa-search absolute left-3.5 top-3.5 text-slate-500 text-sm"></i>
-                    <input type="text" id="search-input" oninput="filterCodes()" placeholder="ค้นหาชื่อโค้ด, ผู้ส่ง หรือเนื้อหา..." 
-                        class="w-full bg-slate-950 text-slate-200 text-sm pl-10 pr-4 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="search-input" oninput="filterCodes()" placeholder="ค้นหาชื่อลิง, ผู้ส่ง หรือโค้ด..." class="w-full bg-slate-950 text-slate-200 text-sm pl-10 pr-4 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-amber-400">
                 </div>
-                <button onclick="loadGlobalCodes()" class="w-full sm:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-xl border border-slate-700 transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-rotate"></i> รีเฟรชรายการ
+                <button onclick="loadGlobalCodes()" class="w-full sm:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-xl border border-slate-700 transition">
+                    <i class="fa-solid fa-rotate"></i> รีเฟรชคลังลิง
                 </button>
             </div>
 
-            <!-- Codes Grid -->
-            <div id="codes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Dynamically injected code cards -->
-            </div>
+            <div id="codes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
-            <!-- Empty State -->
-            <div id="empty-state" class="hidden text-center py-20 bg-card rounded-2xl border border-slate-800 fallback-card">
-                <i class="fa-solid fa-code text-5xl text-slate-600 mb-3"></i>
-                <h3 class="text-lg font-semibold text-slate-300">ยังไม่มีโค้ดในระบบกลาง</h3>
-                <p class="text-xs text-slate-500 mt-1">มาเป็นคนแรกที่ส่งโค้ด HTML ขึ้นสู่คลังสาธารณะกันเถอะ!</p>
-                <button onclick="switchTab('submit')" class="mt-4 px-4 py-2 bg-indigo-600 text-white text-xs font-medium rounded-xl">ส่งโค้ดตอนนี้</button>
+            <div id="empty-state" class="hidden text-center py-20 bg-card rounded-2xl border border-slate-800">
+                <div class="text-6xl mb-3">🐒</div>
+                <h3 class="text-lg font-semibold text-slate-300">ยังไม่มีโค้ดลิงในคลัง</h3>
+                <p class="text-xs text-slate-500 mt-1">ร่วมกันปล่อยโค้ดลิงสู่โลกกันเถอะ!</p>
+                <button onclick="switchTab('submit')" class="mt-4 px-4 py-2 bg-amber-400 text-slate-900 text-xs font-bold rounded-xl">ส่งโค้ดลิงตอนนี้</button>
             </div>
         </section>
 
-        <!-- TAB 2: SUBMIT CODE (ส่งโค้ดของคุณ) -->
         <section id="tab-submit" class="hidden space-y-6 max-w-3xl mx-auto">
-            <div class="bg-card border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4 fallback-card">
+            <div class="bg-card border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
                 <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
-                    <div class="bg-indigo-600/20 text-indigo-400 p-2.5 rounded-xl">
-                        <i class="fa-solid fa-cloud-arrow-up text-xl"></i>
-                    </div>
+                    <div class="bg-emerald-600/20 text-emerald-400 p-3 rounded-xl text-xl">🐵</div>
                     <div>
-                        <h2 class="text-lg font-bold text-slate-200">แบ่งปันโค้ดของคุณสู่สาธารณะทั่วโลก</h2>
-                        <p class="text-xs text-slate-400">กรอกรายละเอียดและวางโค้ด HTML เพื่อให้ทุกคนสามารถเข้ามาหยิบไปใช้งานต่อได้</p>
+                        <h2 class="text-lg font-bold text-slate-200">ส่งโค้ดลิงสู่คลังสาธารณะ</h2>
+                        <p class="text-xs text-slate-400">กรอกข้อมูลและวางโค้ด HTML ของคุณเพื่อให้ลิงอื่นได้หยิบไปเล่นต่อ</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">ชื่อหัวข้อ / ชื่อโปรแกรมโค้ด *</label>
-                        <input type="text" id="submit-title" placeholder="เช่น ระบบคำนวณภาษี, เกมงู HTML" 
-                            class="w-full bg-slate-950 text-slate-200 text-sm px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">ชื่อโค้ดลิง *</label>
+                        <input type="text" id="submit-title" placeholder="เช่น เกมลิงวิ่ง, แปลงรูปเป็นมะพร้าว" class="w-full bg-slate-950 text-slate-200 text-sm px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-amber-400">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">ชื่อผู้ส่ง / นามแฝง *</label>
-                        <input type="text" id="submit-author" placeholder="เช่น DeveloperTH, สมชาย" 
-                            class="w-full bg-slate-950 text-slate-200 text-sm px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">ชื่อผู้ส่ง *</label>
+                        <input type="text" id="submit-author" placeholder="เช่น ลิงจิ๋ว, ฝูงลิง" class="w-full bg-slate-950 text-slate-200 text-sm px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-amber-400">
                     </div>
                 </div>
 
                 <div>
                     <div class="flex justify-between items-center mb-1.5">
-                        <label class="block text-xs font-semibold text-slate-300">วางโค้ด HTML (รองรับขนาดใหญ่) *</label>
+                        <label class="block text-xs font-semibold text-slate-300">วางโค้ด HTML *</label>
                         <span id="submit-char-count" class="text-xs text-slate-500">0 ตัวอักษร</span>
                     </div>
-                    <textarea id="submit-code" placeholder="&lt;!DOCTYPE html&gt;&#10;&lt;html&gt;&#10;&lt;head&gt;...&lt;/head&gt;&#10;&lt;body&gt;...&lt;/body&gt;&#10;&lt;/html&gt;" 
-                        class="w-full h-80 bg-slate-950 text-indigo-200 p-4 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500 resize-none text-sm leading-relaxed"
-                        oninput="document.getElementById('submit-char-count').textContent = this.value.length.toLocaleString() + ' ตัวอักษร'"></textarea>
+                    <textarea id="submit-code" placeholder="&lt;!DOCTYPE html&gt;\n&lt;html&gt;..." class="w-full h-80 bg-slate-950 text-amber-200 p-4 rounded-xl border border-slate-800 focus:outline-none focus:border-amber-400 resize-none text-sm leading-relaxed" oninput="document.getElementById('submit-char-count').textContent = this.value.length.toLocaleString() + ' ตัวอักษร'"></textarea>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2">
-                    <button onclick="switchTab('feed')" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-xl transition border border-slate-700">ยกเลิก</button>
-                    <button onclick="publishCode()" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
-                        <i class="fa-solid fa-paper-plane"></i> เผยแพร่สู่คลังสาธารณะ
+                    <button onclick="switchTab('feed')" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-xl transition border border-slate-700">กลับ</button>
+                    <button onclick="publishCode()" class="px-6 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-900 text-sm font-bold rounded-xl shadow-lg shadow-amber-500/30 transition flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> เผยแพร่สู่คลังลิง
                     </button>
                 </div>
             </div>
         </section>
-
     </main>
 
-    <!-- MODAL: RUNNER & VIEWER -->
     <div id="modal-viewer" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-card border border-slate-800 w-full max-w-5xl h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden fallback-card">
+        <div class="bg-card border border-slate-800 w-full max-w-5xl h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
             <div class="bg-slate-900 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
                 <div>
-                    <h3 id="modal-title" class="text-base font-bold text-slate-200">ชื่อโปรแกรม</h3>
-                    <p id="modal-author-date" class="text-xs text-slate-400">โดย ผู้ส่ง • วันที่</p>
+                    <h3 id="modal-title" class="text-base font-bold text-slate-200">ชื่อโค้ดลิง</h3>
+                    <p id="modal-author-date" class="text-xs text-slate-400">โดย ลิง • วันที่</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button onclick="copyModalCode()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-copy"></i> คัดลอกโค้ด
-                    </button>
-                    <button onclick="downloadModalCode()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-download"></i> ดาวน์โหลด
-                    </button>
-                    <button onclick="openInNewTab()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-lg transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> เปิดแท็บใหม่
-                    </button>
-                    <button onclick="closeModal()" class="p-2 text-slate-400 hover:text-white ml-2 text-lg">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
+                    <button onclick="copyModalCode()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition flex items-center gap-1.5"><i class="fa-solid fa-copy"></i> คัดลอก</button>
+                    <button onclick="downloadModalCode()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition flex items-center gap-1.5"><i class="fa-solid fa-download"></i> ดาวน์โหลด</button>
+                    <button onclick="openInNewTab()" class="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 text-xs font-bold rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-arrow-up-right-from-square"></i> เปิดแท็บใหม่</button>
+                    <button onclick="closeModal()" class="p-2 text-slate-400 hover:text-white ml-2 text-lg"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 flex-grow p-4 gap-4 overflow-hidden">
                 <div class="flex flex-col h-full bg-white rounded-xl overflow-hidden border border-slate-800">
                     <div class="bg-slate-100 px-3 py-1.5 text-xs text-slate-600 font-medium border-b flex items-center justify-between">
-                        <span><i class="fa-solid fa-desktop text-indigo-600 mr-1"></i> แสดงผลลัพธ์ (Live Preview)</span>
-                        <button onclick="refreshPreview()" class="text-indigo-600 hover:underline"><i class="fa-solid fa-rotate"></i> รีเฟรช</button>
+                        <span><i class="fa-solid fa-desktop text-amber-500 mr-1"></i> Preview</span>
+                        <button onclick="refreshPreview()" class="text-amber-600 hover:underline"><i class="fa-solid fa-rotate"></i> รีเฟรช</button>
                     </div>
                     <iframe id="modal-preview-frame" class="w-full flex-grow border-0"></iframe>
                 </div>
                 <div class="flex flex-col h-full bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
                     <div class="bg-slate-900 px-3 py-1.5 text-xs text-slate-400 font-medium border-b border-slate-800 flex items-center justify-between">
-                        <span><i class="fa-solid fa-code text-cyan-400 mr-1"></i> โค้ดต้นฉบับ HTML</span>
+                        <span><i class="fa-solid fa-code text-emerald-400 mr-1"></i> โค้ด HTML</span>
                         <span id="modal-code-chars">0 ตัวอักษร</span>
                     </div>
-                    <textarea id="modal-code-textarea" readonly class="w-full flex-grow bg-slate-950 text-indigo-200 p-3 text-xs leading-relaxed resize-none focus:outline-none"></textarea>
+                    <textarea id="modal-code-textarea" readonly class="w-full flex-grow bg-slate-950 text-amber-200 p-3 text-xs leading-relaxed resize-none focus:outline-none"></textarea>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: FIREBASE CONFIG -->
-    <div id="modal-config" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-card border border-slate-800 w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl fallback-card">
-            <h3 class="text-base font-bold text-slate-200 flex items-center gap-2">
-                <i class="fa-solid fa-gear text-indigo-400"></i> ตั้งค่าฐานข้อมูลกลาง (Firebase)
-            </h3>
-            <p class="text-xs text-slate-400">
-                เนื่องจากเว็บไซต์นี้อยู่บน GitHub Pages หากต้องการให้เครื่องทั่วโลกซิงค์โค้ดร่วมกันได้ ให้ใส่ Database URL ของ Firebase:
-            </p>
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Database URL</label>
-                    <input type="text" id="cfg-dburl" placeholder="https://your-app-default-rtdb.firebaseio.com" 
-                        class="w-full bg-slate-950 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500">
-                </div>
-            </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="closeConfigModal()" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs rounded-xl">ยกเลิก</button>
-                <button onclick="saveFirebaseConfig()" class="px-4 py-2 bg-indigo-600 text-white text-xs font-medium rounded-xl">บันทึกและเชื่อมต่อ</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
     <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-500">
-        Global Code Hub • ศูนย์กลางแชร์โค้ด HTML สาธารณะผ่าน GitHub Pages
+        Monkey Code Hub • ลิงคัดสรรโค้ดจากทั่วโลก
     </footer>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl transform translate-y-24 opacity-0 transition-all duration-300 z-50 flex items-center gap-3 text-sm">
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl transform translate-y-24 opacity-0 transition-all duration-300 z-50">
         <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
         <span id="toast-message">สำเร็จ!</span>
     </div>
 
-    <!-- JavaScript Logic -->
     <script>
         let globalCodes = {};
         let activeCodeData = null;
-        let db = null;
 
-        const savedDbUrl = localStorage.getItem('global_hub_dburl');
-        if (savedDbUrl) {
-            initFirebase(savedDbUrl);
-        } else {
-            initLocalStorageMode();
-        }
-
-        function initFirebase(dbUrl) {
-            try {
-                if (!firebase.apps.length) {
-                    firebase.initializeApp({ databaseURL: dbUrl });
-                }
-                db = firebase.database();
-                loadGlobalCodes();
-            } catch (e) {
-                console.error(e);
-                initLocalStorageMode();
+        let defaultMonkeyCodes = {
+            monkey_1: {
+                title: 'ลิงวิ่งบนพื้นหญ้า',
+                author: 'ลิงจิ๋ว',
+                date: new Date().toLocaleString(),
+                code: '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:linear-gradient(#a7f3d0,#14532d);font-family:sans-serif} .monkey{font-size:120px;animation:hop 1s infinite}.ground{position:absolute;bottom:0;width:100%;height:80px;background:#166534}.@keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}</style></head><body><div class="ground"></div><div class="monkey">🐵</div></body></html>'
+            },
+            monkey_2: {
+                title: 'เมนูลิงชอบกล้วย',
+                author: 'กองลิง',
+                date: new Date().toLocaleString(),
+                code: '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;height:100vh;display:grid;place-items:center;background:#0f172a;color:#fef3c7;font-family:sans-serif}.box{padding:28px 36px;border-radius:20px;background:#1f2937;border:2px solid #fbbf24;box-shadow:0 0 20px rgba(251,191,36,.25)} h1{margin:0 0 10px;font-size:35px} .emoji{font-size:50px} .banana{color:#facc15}</style></head><body><div class="box"><div class="emoji">🐵</div><h1>ลิงชอบกล้วย</h1><div class="banana">🍌 🍌 🍌</div></div></body></html>'
             }
-        }
-
-        function initLocalStorageMode() {
-            db = null;
-            loadGlobalCodes();
-        }
+        };
 
         function loadGlobalCodes() {
-            showToast('กำลังโหลดข้อมูลคลังโค้ด...', 'success');
-            if (db) {
-                db.ref('codes').once('value').then(snapshot => {
-                    globalCodes = snapshot.val() || {};
-                    renderCodesGrid(globalCodes);
-                }).catch(err => {
-                    console.error(err);
-                    loadLocalFallback();
-                });
-            } else {
-                loadLocalFallback();
-            }
-        }
-
-        function loadLocalFallback() {
-            const localData = localStorage.getItem('global_hub_local_codes');
-            globalCodes = localData ? JSON.parse(localData) : {
-                "sample_1": {
-                    title: "ยินดีต้อนรับสู่ Global Code Hub",
-                    author: "System Admin",
-                    date: new Date().toLocaleString(),
-                    code: "<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome</title>\n<style>body{font-family:sans-serif;text-align:center;padding-top:50px;background:#f0f9ff;color:#0369a1;}</style>\n</head>\n<body>\n<h1>🚀 ยินดีต้อนรับสู่ศูนย์รวมโค้ดระดับโลกบน GitHub Pages</h1>\n<p>คลิกปุ่มตั้งค่า (รูปเฟืองขวาบน) เพื่อเชื่อมต่อ Firebase Database แล้วทุกคนทั่วโลกจะสามารถแชร์โค้ดร่วมกันได้ทันที!</p>\n</body>\n</html>"
-                }
-            };
+            const stored = localStorage.getItem('monkey_hub_codes');
+            globalCodes = stored ? JSON.parse(stored) : defaultMonkeyCodes;
             renderCodesGrid(globalCodes);
         }
 
@@ -291,31 +202,23 @@
             keys.reverse().forEach(key => {
                 const item = codesObj[key];
                 const card = document.createElement('div');
-                card.className = 'bg-card border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-xl hover:border-indigo-500/50 transition group fallback-card';
+                card.className = 'bg-card border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-xl hover:border-amber-400/50 transition group';
                 card.innerHTML = `
                     <div>
                         <div class="flex justify-between items-start gap-2 mb-2">
-                            <h3 class="font-bold text-slate-200 text-base group-hover:text-indigo-400 transition line-clamp-1">${escapeHtml(item.title)}</h3>
+                            <h3 class="font-bold text-slate-200 text-base group-hover:text-amber-300 transition line-clamp-1">${escapeHtml(item.title)}</h3>
                             <span class="text-[10px] bg-slate-900 text-slate-400 px-2.5 py-1 rounded-full border border-slate-800 shrink-0">${item.date || 'เมื่อเร็วๆ นี้'}</span>
                         </div>
-                        <p class="text-xs text-slate-400 mb-4 flex items-center gap-1.5">
-                            <i class="fa-solid fa-user-circle text-indigo-400"></i> โดย <span class="text-slate-300 font-medium">${escapeHtml(item.author)}</span>
-                        </p>
+                        <p class="text-xs text-slate-400 mb-4 flex items-center gap-1.5"><i class="fa-solid fa-user-circle text-amber-400"></i> โดย <span class="text-slate-300 font-medium">${escapeHtml(item.author)}</span></p>
                         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80 mb-4 h-24 overflow-hidden relative">
-                            <pre class="text-[11px] text-indigo-300/70 font-mono line-clamp-4">${escapeHtml(item.code)}</pre>
+                            <pre class="text-[11px] text-amber-200/80 font-mono line-clamp-4">${escapeHtml(item.code)}</pre>
                             <div class="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-slate-950 to-transparent"></div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 pt-2 border-t border-slate-800/80">
-                        <button onclick="openViewer('${key}')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-600/20">
-                            <i class="fa-solid fa-play"></i> รัน & ดูโค้ด
-                        </button>
-                        <button onclick="quickCopyCode('${key}')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs p-2.5 rounded-xl transition border border-slate-700" title="คัดลอกโค้ด">
-                            <i class="fa-solid fa-copy"></i>
-                        </button>
-                        <button onclick="deleteCode('${key}')" class="bg-slate-800 hover:bg-red-900/50 hover:text-red-400 text-slate-400 text-xs p-2.5 rounded-xl transition border border-slate-700" title="ลบโค้ดนี้">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
+                        <button onclick="openViewer('${key}')" class="flex-1 bg-amber-400 hover:bg-amber-300 text-slate-900 text-xs font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-2"><i class="fa-solid fa-play"></i> รัน & ดู</button>
+                        <button onclick="quickCopyCode('${key}')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs p-2.5 rounded-xl transition border border-slate-700" title="คัดลอกโค้ด"><i class="fa-solid fa-copy"></i></button>
+                        <button onclick="deleteCode('${key}')" class="bg-slate-800 hover:bg-red-900/50 hover:text-red-400 text-slate-400 text-xs p-2.5 rounded-xl transition border border-slate-700" title="ลบ"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -327,7 +230,7 @@
             const filtered = {};
             Object.keys(globalCodes).forEach(key => {
                 const item = globalCodes[key];
-                if (item.title.toLowerCase().includes(query) || item.author.toLowerCase().includes(query) || item.code.toLowerCase().includes(query)) {
+                if ((item.title || '').toLowerCase().includes(query) || (item.author || '').toLowerCase().includes(query) || (item.code || '').toLowerCase().includes(query)) {
                     filtered[key] = item;
                 }
             });
@@ -346,33 +249,19 @@
 
             const codeId = 'code_' + Date.now();
             const newEntry = {
-                title: title,
-                author: author,
+                title,
+                author,
                 date: new Date().toLocaleString(),
-                code: code
+                code
             };
 
-            if (db) {
-                showToast('กำลังส่งโค้ดขึ้นระบบคลาวด์...', 'success');
-                db.ref('codes/' + codeId).set(newEntry).then(() => {
-                    finishPublish();
-                }).catch(err => {
-                    console.error(err);
-                    publishLocalFallback(codeId, newEntry);
-                });
-            } else {
-                publishLocalFallback(codeId, newEntry);
-            }
-        }
-
-        function publishLocalFallback(codeId, entry) {
-            globalCodes[codeId] = entry;
-            localStorage.setItem('global_hub_local_codes', JSON.stringify(globalCodes));
+            globalCodes[codeId] = newEntry;
+            localStorage.setItem('monkey_hub_codes', JSON.stringify(globalCodes));
             finishPublish();
         }
 
         function finishPublish() {
-            showToast('เผยแพร่โค้ดสำเร็จ!', 'success');
+            showToast('เผยแพร่โค้ดลิงสำเร็จ!', 'success');
             document.getElementById('submit-title').value = '';
             document.getElementById('submit-author').value = '';
             document.getElementById('submit-code').value = '';
@@ -381,27 +270,12 @@
             loadGlobalCodes();
         }
 
-        // ฟังก์ชันลบโค้ด
         function deleteCode(key) {
-            if (!confirm('คุณต้องการลบโค้ดนี้ออกจากระบบใช่หรือไม่?')) {
-                return;
-            }
-
-            if (db) {
-                showToast('กำลังลบโค้ดจากระบบคลาวด์...', 'success');
-                db.ref('codes/' + key).remove().then(() => {
-                    showToast('ลบโค้ดสำเร็จ!', 'success');
-                    loadGlobalCodes();
-                }).catch(err => {
-                    console.error(err);
-                    showToast('เกิดข้อผิดพลาดในการลบ', 'error');
-                });
-            } else {
-                delete globalCodes[key];
-                localStorage.setItem('global_hub_local_codes', JSON.stringify(globalCodes));
-                showToast('ลบโค้ดสำเร็จ!', 'success');
-                renderCodesGrid(globalCodes);
-            }
+            if (!confirm('คุณต้องการลบโค้ดลิงนี้ใช่หรือไม่?')) return;
+            delete globalCodes[key];
+            localStorage.setItem('monkey_hub_codes', JSON.stringify(globalCodes));
+            showToast('ลบโค้ดลิงสำเร็จ!', 'success');
+            renderCodesGrid(globalCodes);
         }
 
         function openViewer(key) {
@@ -412,7 +286,7 @@
             document.getElementById('modal-title').textContent = item.title;
             document.getElementById('modal-author-date').textContent = `โดย ${item.author} • ${item.date || ''}`;
             document.getElementById('modal-code-textarea').value = item.code;
-            document.getElementById('modal-code-chars').textContent = `${item.code.length.toLocaleString()} ตัวอักษร`;
+            document.getElementById('modal-code-chars').textContent = `${(item.code || '').length.toLocaleString()} ตัวอักษร`;
 
             refreshPreview();
             document.getElementById('modal-viewer').classList.remove('hidden');
@@ -442,7 +316,7 @@
         function copyModalCode() {
             if (!activeCodeData) return;
             navigator.clipboard.writeText(activeCodeData.code);
-            showToast('คัดลอกโค้ดทั้งหมดแล้ว!', 'success');
+            showToast('คัดลอกโค้ดลิงแล้ว!', 'success');
         }
 
         function quickCopyCode(key) {
@@ -458,7 +332,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${activeCodeData.title.replace(/[^a-zA-Z0-9ก-ฮ]/g, '_')}.html`;
+            a.download = `${(activeCodeData.title || 'monkey').replace(/[^a-zA-Z0-9ก-ฮ]/g, '_')}.html`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -475,41 +349,19 @@
             if (tabName === 'feed') {
                 feedSec.classList.remove('hidden');
                 submitSec.classList.add('hidden');
-                btnFeed.className = "px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl transition shadow-lg shadow-indigo-600/20 flex items-center gap-2";
-                btnSubmit.className = "px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-xl transition border border-slate-700 flex items-center gap-2";
+                btnFeed.className = 'px-4 py-2 bg-amber-400 text-slate-900 text-sm font-bold rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2';
+                btnSubmit.className = 'px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-xl transition border border-slate-700 flex items-center gap-2';
             } else {
                 feedSec.classList.add('hidden');
                 submitSec.classList.remove('hidden');
-                btnSubmit.className = "px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl transition shadow-lg shadow-indigo-600/20 flex items-center gap-2";
-                btnFeed.className = "px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-xl transition border border-slate-700 flex items-center gap-2";
+                btnSubmit.className = 'px-4 py-2 bg-amber-400 text-slate-900 text-sm font-bold rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2';
+                btnFeed.className = 'px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-xl transition border border-slate-700 flex items-center gap-2';
             }
-        }
-
-        function openConfigModal() {
-            document.getElementById('cfg-dburl').value = localStorage.getItem('global_hub_dburl') || '';
-            document.getElementById('modal-config').classList.remove('hidden');
-        }
-        function closeConfigModal() {
-            document.getElementById('modal-config').classList.add('hidden');
-        }
-        function saveFirebaseConfig() {
-            const url = document.getElementById('cfg-dburl').value.trim();
-            if (url) {
-                localStorage.setItem('global_hub_dburl', url);
-                initFirebase(url);
-                showToast('บันทึกการตั้งค่า Firebase สำเร็จ!', 'success');
-            } else {
-                localStorage.removeItem('global_hub_dburl');
-                initLocalStorageMode();
-                showToast('เปลี่ยนเป็นโหมด Local Storage แล้ว', 'success');
-            }
-            closeConfigModal();
-            loadGlobalCodes();
         }
 
         function escapeHtml(text) {
             if (!text) return '';
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
 
         function showToast(message, type = 'success') {
@@ -522,6 +374,8 @@
                 toast.classList.add('translate-y-24', 'opacity-0');
             }, 3000);
         }
+
+        loadGlobalCodes();
     </script>
 </body>
 </html>
