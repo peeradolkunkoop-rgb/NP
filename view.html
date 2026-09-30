@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview - Global Code Hub</title>
+</head>
+<body style="margin:0; padding:0;">
+    <iframe id="frame" style="width:100%; height:100vh; border:none;" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"></iframe>
+    <script>
+        fetch('https://cdn.jsdelivr.net/gh/peeradolkunkoop-rgb/NP@main/samlan.html')
+            .then(r => r.text())
+            .then(html => {
+                const iframe = document.getElementById('frame');
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                doc.open();
+                doc.write(html);
+                doc.close();
+            });
+    </script>
+</body>
+</html>
