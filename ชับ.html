@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Subtitle Studio – โปรแกรมซับไตเติลเลือกสไตล์ได้</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Kanit:wght@400;700&family=Prompt:wght@400;700&family=Mitr:wght@400;600&family=Pridi:wght@400;700&family=Itim&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f3f1ee;--panel:#fff;--ink:#1d1b1a;--mute:#6f6a66;--line:#dcd7d1;--acc:#0d6e6e;--accink:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141516;--panel:#1e2022;--ink:#ecebe9;--mute:#9a9893;--line:#34373a;--acc:#4fd1c5;--accink:#062626}}
+:root[data-theme="dark"]{--bg:#141516;--panel:#1e2022;--ink:#ecebe9;--mute:#9a9893;--line:#34373a;--acc:#4fd1c5;--accink:#062626}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Sarabun,system-ui,sans-serif}
+header{padding:16px 16px 4px;max-width:1100px;margin:auto}
+h1{font:700 1.5rem Kanit,Sarabun,sans-serif;margin:0}
+header p{margin:2px 0 0;color:var(--mute);font-size:.95rem}
+main{max-width:1100px;margin:auto;padding:12px 16px 32px;display:grid;gap:16px;grid-template-columns:1fr}
+@media(min-width:900px){main{grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);align-items:start}}
+.stage{container-type:inline-size;position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,#27425a,#6b3f5e 60%,#c9824f);border-radius:10px;overflow:hidden}
+.stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:none}
+.stage.hasv video{display:block}
+.stage .hint{position:absolute;left:0;right:0;top:10px;text-align:center;color:#fff9;font-size:.8rem}
+#sub{position:absolute;left:5%;right:5%;text-align:center;white-space:pre-line;line-height:1.3;pointer-events:none}
+#sub span{padding:.1em .4em;border-radius:.2em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+#sub.bottom{bottom:6%}#sub.lower{bottom:22%}#sub.middle{top:50%;transform:translateY(-50%)}#sub.top{top:8%}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card h2{font:700 1rem Kanit,Sarabun,sans-serif;margin:0 0 10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pre{border:2px solid var(--line);border-radius:8px;background:#222;color:#fff;padding:12px 4px;cursor:pointer;font-size:1rem;min-height:48px}
+.pre.on{border-color:var(--acc);outline:2px solid var(--acc)}
+label{display:flex;flex-direction:column;gap:3px;font-size:.85rem;color:var(--mute);flex:1 1 120px}
+select,input[type=range],input[type=number],textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px}
+input[type=range]{padding:0}
+input[type=color]{width:100%;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:2px}
+textarea{min-height:170px;font:.85rem/1.4 ui-monospace,Menlo,monospace;resize:vertical}
+button,.btn{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:8px 12px;cursor:pointer;min-height:40px}
+button.p,.btn.p{background:var(--acc);color:var(--accink);border-color:var(--acc)}
+button.tg.on{background:var(--acc);color:var(--accink)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+input[type=file]{display:none}
+.side{display:grid;gap:16px}
+.note{font-size:.8rem;color:var(--mute);margin:6px 0 0}
+.cue{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px}.cue button{flex:0 0 64px;min-height:0;padding:6px 2px;font-size:.8rem}.cue textarea{min-height:0;height:46px;font:inherit}
+</style>
+</head>
+<body>
+<header>
+<h1>Subtitle Studio</h1>
+<p>ใส่วิดีโอ ให้โปรแกรมสร้างซับจากเสียงพูด แล้วเลือกสไตล์และส่งออก</p>
+</header>
+<main>
+<section>
+<div class="stage" id="stage">
+<video id="vid" controls playsinline></video>
+<div class="hint" id="hint">ตัวอย่างสไตล์ (ยังไม่ได้เลือกวิดีโอ)</div>
+<div id="sub" class="bottom"><span id="txt"></span></div>
+</div>
+<div class="card" style="margin-top:12px">
+<div class="row">
+<button class="p" id="bv" type="button">เลือกวิดีโอ</button>
+<input type="file" id="fv" accept="video/*,audio/*,.mp4,.webm,.mov,.m4v,.mkv,.mp3">
+<button id="bs" type="button">หรือโหลดไฟล์ซับที่มีอยู่</button>
+<input type="file" id="fs" accept=".srt,.vtt,.txt">
+</div>
+<p class="note" id="msg" role="status" style="margin:0 0 8px"></p>
+<label>ปรับเวลาซับ (วินาที): <b id="offv">0</b>
+<input type="range" id="off" min="-10" max="10" step="0.1" value="0"></label>
+</div>
+<div class="card" style="margin-top:12px">
+<h2>สร้างซับอัตโนมัติจากเสียงในวิดีโอ</h2>
+<div class="row">
+<label>ภาษาในวิดีโอ<select id="lang"><option value="thai">ไทย</option><option value="english">อังกฤษ</option><option value="japanese">ญี่ปุ่น</option><option value="chinese">จีน</option><option value="korean">เกาหลี</option><option value="">ให้เดาเอง</option></select></label>
+<label>ความแม่นยำ<select id="model"><option value="Xenova/whisper-tiny">เร็ว (~40 MB)</option><option value="Xenova/whisper-base" selected>กลาง (~80 MB)</option><option value="Xenova/whisper-small">แม่นสุด ช้า (~250 MB)</option></select></label>
+</div>
+<button class="p" id="gen" type="button">เริ่มสร้างซับ</button>
+<progress id="pg" max="100" value="0" style="width:100%;margin-top:10px;display:none"></progress>
+<p class="note">ถอดเสียงในเครื่องคุณเอง วิดีโอไม่ถูกอัปโหลดไปไหน ครั้งแรกต้องต่ออินเทอร์เน็ตเพื่อโหลดโมเดล หลังจากนั้นเบราว์เซอร์จะจำไว้ วิดีโอยาวจะใช้เวลานาน แนะนำให้ลองคลิปสั้นก่อน</p>
+</div>
+<div class="card" style="margin-top:12px">
+<h2>ตรวจและแก้ข้อความซับ</h2>
+<div id="list"><p class="note">ยังไม่มีซับ</p></div>
+<p class="note">แตะเวลาเพื่อกระโดดไปช่วงนั้นในวิดีโอ แก้ข้อความแล้วซับจะเปลี่ยนทันที หลังแก้ข้อความ การเปลี่ยนเทมเพลตจะเปลี่ยนแค่หน้าตา ไม่ตัดช่วงใหม่</p>
+</div>
+<div class="card" style="margin-top:12px">
+<h2>ส่งออกไปใช้ในแอปตัดต่อ</h2>
+<div class="row" style="margin:0">
+<button class="p" id="xass" type="button">ดาวน์โหลด .ass (พร้อมสไตล์)</button>
+<button id="xsrt" type="button">.srt</button>
+<button id="xvtt" type="button">.vtt</button>
+</div>
+<p class="note">.ass พกสไตล์ที่เลือกไว้ (ฟอนต์ สี ขอบ ตำแหน่ง) ไปด้วย ใช้ได้กับ DaVinci Resolve, Kdenlive, Shotcut, VLC, HandBrake, FFmpeg ส่วน .srt/.vtt เป็นข้อความล้วน นำเข้าได้เกือบทุกแอป ฟอนต์ต้องติดตั้งในเครื่องที่ใช้ตัดต่อด้วย</p>
+</div>
+</section>
+<section class="side">
+<div class="card">
+<h2>เลือกเทมเพลตตามแอป</h2>
+<div class="presets" id="presets"></div>
+</div>
+<div class="card">
+<h2>ปรับแต่งเอง</h2>
+<div class="row">
+<label>ฟอนต์
+<select id="font">
+<option>Sarabun</option><option>Kanit</option><option>Prompt</option><option>Mitr</option><option>Pridi</option><option>Itim</option>
+</select></label>
+<label>ตำแหน่ง
+<select id="pos"><option value="bottom">ล่างสุด</option><option value="lower">ล่างขึ้นมา (แบบ TikTok)</option><option value="middle">กลาง</option><option value="top">บน</option></select></label>
+</div>
+<div class="row"><label>ขนาด: <b id="sizev"></b><input type="range" id="size" min="2" max="8" step="0.1"></label></div>
+<div class="row">
+<label>สีตัวอักษร<input type="color" id="color"></label>
+<label>สีขอบ<input type="color" id="stroke"></label>
+<label>สีพื้นหลัง<input type="color" id="bg"></label>
+</div>
+<div class="row">
+<label>ความหนาขอบ: <b id="swv"></b><input type="range" id="sw" min="0" max="6" step="0.5"></label>
+<label>ความทึบพื้นหลัง: <b id="bov"></b><input type="range" id="bo" min="0" max="1" step="0.05"></label>
+</div>
+<div class="row">
+<button class="tg" id="bold">ตัวหนา</button>
+<button class="tg" id="ital">ตัวเอียง</button>
+<button class="tg" id="glow">เรืองแสง</button>
+</div>
+</div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const PRESETS={
+ 'TikTok':{font:'Kanit',size:6.5,color:'#ffffff',stroke:'#000000',sw:4,bg:'#000000',bo:0,bold:true,ital:false,glow:false,pos:'lower',maxChars:14,maxDur:1.8},
+ 'CapCut':{font:'Kanit',size:7,color:'#ffe600',stroke:'#000000',sw:4.5,bg:'#000000',bo:0,bold:true,ital:false,glow:false,pos:'middle',maxChars:12,maxDur:1.5},
+ 'Reels':{font:'Prompt',size:4.8,color:'#ffffff',stroke:'#000000',sw:0,bg:'#000000',bo:0.6,bold:true,ital:false,glow:false,pos:'lower',maxChars:22,maxDur:2.6},
+ 'YouTube':{font:'Prompt',size:3.8,color:'#ffffff',stroke:'#000000',sw:0,bg:'#000000',bo:0.75,bold:false,ital:false,glow:false,pos:'bottom',maxChars:34,maxDur:4.5},
+ 'Netflix':{font:'Sarabun',size:4,color:'#ffffff',stroke:'#000000',sw:1.5,bg:'#000000',bo:0,bold:false,ital:false,glow:false,pos:'bottom',maxChars:36,maxDur:4.5},
+ 'ทีวีข่าว':{font:'Sarabun',size:4,color:'#ffffff',stroke:'#000000',sw:0,bg:'#0b3d91',bo:0.9,bold:true,ital:false,glow:false,pos:'bottom',maxChars:38,maxDur:5}
+};
+const S={};
+const SAMPLE=`1
+00:00:00,500 --> 00:00:03,500
+สวัสดีครับ ยินดีต้อนรับ
+ตัวอย่างซับไตเติลภาษาไทย
+
+2
+00:00:03,600 --> 00:00:07,000
+เลือกสไตล์ได้ทางขวา
+แล้วดูผลทันที
+
+3
+00:00:07,100 --> 00:00:10,500
+Subtitles look great in English too.`;
+let cues=[],demo=true;
+
+function pt(s){const m=s.trim().match(/(?:(\d+):)?(\d+):(\d+)[,.](\d+)/);return m?(+(m[1]||0))*3600+(+m[2])*60+(+m[3])+(+('0.'+m[4])):0}
+function parse(t){
+ const out=[];
+ t.replace(/\r/g,'').replace(/^\uFEFF/,'').replace(/^WEBVTT.*\n/,'').split(/\n\s*\n/).forEach(b=>{
+  const L=b.trim().split('\n'),i=L.findIndex(l=>l.includes('-->'));
+  if(i<0)return;
+  const [a,c]=L[i].split('-->');
+  out.push({s:pt(a),e:pt(c),t:L.slice(i+1).join('\n').replace(/<[^>]+>/g,'')});
+ });
+ return out;
+}
+function fmt(x){const h=Math.floor(x/3600),m=Math.floor(x%3600/60),s=Math.floor(x%60),ms=Math.round((x%1)*1000);
+ const p=(n,l=2)=>String(n).padStart(l,'0');return `${p(h)}:${p(m)}:${p(s)},${p(ms,3)}`}
+
+function render(){
+ const sub=$('sub'),tx=$('txt'),sw=S.sw*0.1;
+ const sh=[];
+ if(S.sw>0)for(let a=0;a<360;a+=45){sh.push(`${(Math.cos(a*Math.PI/180)*sw).toFixed(2)}cqw ${(Math.sin(a*Math.PI/180)*sw).toFixed(2)}cqw 0 ${S.stroke}`)}
+ if(S.glow)sh.push(`0 0 .4cqw ${S.color}`,`0 0 1cqw ${S.color}`,`0 0 2cqw ${S.color}`);
+ else sh.push(`0 .2cqw .4cqw rgba(0,0,0,.5)`);
+ const r=parseInt(S.bg.slice(1,3),16),g=parseInt(S.bg.slice(3,5),16),b=parseInt(S.bg.slice(5,7),16);
+ sub.className=S.pos;
+ sub.style.fontFamily=`${S.font},Sarabun,sans-serif`;
+ sub.style.fontSize=S.size+'cqw';
+ sub.style.fontWeight=S.bold?700:400;
+ sub.style.fontStyle=S.ital?'italic':'normal';
+ sub.style.color=S.color;
+ sub.style.textShadow=sh.join(',');
+ tx.style.background=`rgba(${r},${g},${b},${S.bo})`;
+ $('size').value=S.size;$('sizev').textContent=S.size;
+ $('sw').value=S.sw;$('swv').textContent=S.sw;
+ $('bo').value=S.bo;$('bov').textContent=S.bo;
+ ['font','pos','color','stroke','bg'].forEach(k=>$(k).value=S[k]);
+ $('bold').classList.toggle('on',S.bold);$('ital').classList.toggle('on',S.ital);$('glow').classList.toggle('on',S.glow);
+ document.querySelectorAll('.pre').forEach(p=>p.classList.toggle('on',p.dataset.n===S.preset));
+}
+function setPreset(n){Object.assign(S,PRESETS[n],{preset:n});regroup();render()}
+
+const PH=$('presets');
+Object.keys(PRESETS).forEach(n=>{
+ const b=document.createElement('button');b.className='pre';b.dataset.n=n;b.textContent=n;
+ const p=PRESETS[n];b.style.fontFamily=p.font;b.style.color=p.color;
+ b.style.textShadow=p.sw?`0 0 ${p.sw}px ${p.stroke},0 0 ${p.sw}px ${p.stroke}`:'none';
+ if(p.bo)b.style.background='#000';
+ if(p.glow)b.style.textShadow=`0 0 8px ${p.color}`;
+ b.onclick=()=>setPreset(n);PH.appendChild(b);
+});
+
+const bind=(id,key,conv=v=>v)=>$(id).addEventListener('input',e=>{S[key]=conv(e.target.value);S.preset='';render()});
+bind('font','font');bind('pos','pos');bind('color','color');bind('stroke','stroke');bind('bg','bg');
+bind('size','size',Number);bind('sw','sw',Number);bind('bo','bo',Number);
+[['bold','bold'],['ital','ital'],['glow','glow']].forEach(([id,k])=>$(id).onclick=()=>{S[k]=!S[k];S.preset='';render()});
+
+function load(t){cues=parse(t);if(typeof renderList==='function')renderList()}
+let loaded=false,words=[],AR=16/9;
+function group(u){
+ const out=[];let c=null;
+ for(const w of u){
+  const L=(c?c.t.trim().length:0)+w.t.trim().length;
+  if(c&&((L>S.maxChars&&(/\s$/.test(c.t)||L>S.maxChars*1.4))||w.s-c.e>0.7||w.e-c.s>S.maxDur||/[.!?]\s*$/.test(c.t))){out.push(c);c=null}
+  if(!c)c={s:w.s,e:w.e,t:w.t};else{c.t+=w.t;c.e=w.e}
+ }
+ if(c)out.push(c);
+ out.forEach((x,i)=>{x.t=x.t.trim();const n=out[i+1];x.e=Math.max(x.e,x.s+0.6);if(n&&x.e>n.s)x.e=Math.max(x.s+0.2,n.s)});
+ return out;
+}
+function renderList(){
+ const L=$('list');if(!L)return;L.innerHTML='';
+ if(!cues.length){L.innerHTML='<p class="note">ยังไม่มีซับ</p>';return}
+ cues.forEach(c=>{
+  const r=document.createElement('div');r.className='cue';
+  const b=document.createElement('button');b.type='button';b.textContent=ts(c.s,'.').slice(3,8);b.onclick=()=>{$('vid').currentTime=Math.max(0,c.s+off())};
+  const t=document.createElement('textarea');t.value=c.t;t.setAttribute('aria-label','ข้อความซับ');
+  t.oninput=()=>{c.t=t.value;words=[]};
+  r.append(b,t);L.append(r);
+ });
+}
+function regroup(){if(words.length)cues=group(words);renderList()}
+function dl(name,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+text],{type:'text/plain;charset=utf-8'}));a.download=name;a.click()}
+function need(){if(!loaded){$('msg').textContent='สร้างซับจากวิดีโอก่อนส่งออก';return true}}
+const off=()=>+$('off').value, sh=x=>Math.max(0,x+off());
+function ts(x,sep){const h=Math.floor(x/3600),m=Math.floor(x%3600/60),s=Math.floor(x%60),ms=Math.round((x%1)*1000),p=(n,l=2)=>String(n).padStart(l,'0');return `${p(h)}:${p(m)}:${p(s)}${sep}${p(ms,3)}`}
+function cs(x){const h=Math.floor(x/3600),m=Math.floor(x%3600/60),s=Math.floor(x%60),c=Math.floor((x%1)*100),p=n=>String(n).padStart(2,'0');return `${h}:${p(m)}:${p(s)}.${p(c)}`}
+$('xsrt').onclick=()=>{if(need())return;dl('subtitle.srt',cues.map((c,i)=>`${i+1}\n${ts(sh(c.s),',')} --> ${ts(sh(c.e),',')}\n${c.t}`).join('\n\n')+'\n')};
+$('xvtt').onclick=()=>{if(need())return;dl('subtitle.vtt','WEBVTT\n\n'+cues.map(c=>`${ts(sh(c.s),'.')} --> ${ts(sh(c.e),'.')}\n${c.t}`).join('\n\n')+'\n')};
+const bgr=h=>(h.slice(5,7)+h.slice(3,5)+h.slice(1,3)).toUpperCase();
+$('xass').onclick=()=>{
+ if(need())return;
+ const W=Math.round(1080*AR),px=Math.round(S.size/100*W),box=S.bo>0;
+ const al=Math.round((1-S.bo)*255).toString(16).padStart(2,'0').toUpperCase();
+ const prim='&H00'+bgr(S.color),out=box?'&H'+al+bgr(S.bg):'&H00'+bgr(S.glow?S.color:S.stroke);
+ const ol=box?Math.round(px*0.2):Math.max(S.glow?3:0,Math.round(S.sw*W/1000));
+ const an={bottom:2,lower:2,middle:5,top:8}[S.pos];
+ const tag=S.glow?'{\\blur4}':'';
+ const head=`[Script Info]\nScriptType: v4.00+\nPlayResX: ${W}\nPlayResY: 1080\nWrapStyle: 0\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\nStyle: Default,${S.font},${px},${prim},&H000000FF,${out},&H80000000,${S.bold?-1:0},${S.ital?-1:0},0,0,100,100,0,0,${box?3:1},${ol},0,${an},96,96,${S.pos==='lower'?238:70},1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n`;
+ dl('subtitle.ass',head+cues.map(c=>`Dialogue: 0,${cs(sh(c.s))},${cs(sh(c.e))},Default,,0,0,0,,${tag}${c.t.replace(/\n/g,'\\N')}`).join('\n')+'\n');
+};
+$('bv').onclick=()=>$('fv').click();
+$('bs').onclick=()=>$('fs').click();
+function ok(){$('stage').classList.add('hasv');$('hint').style.display='none';demo=false}
+$('fv').onchange=e=>{
+ const f=e.target.files[0];if(!f)return;
+ const v=$('vid');let tried=0;
+ $('msg').textContent='กำลังโหลด: '+f.name;
+ v.onloadedmetadata=()=>{ok();if(v.videoWidth){AR=v.videoWidth/v.videoHeight;const st=$('stage');st.style.aspectRatio=v.videoWidth+'/'+v.videoHeight;st.style.width='min(100%,'+(70*AR).toFixed(2)+'vh)';st.style.margin='0 auto'}$('msg').textContent='โหลดวิดีโอแล้ว: '+f.name};
+ v.onerror=()=>{
+  if(!tried&&f.size<200*1048576){
+   tried=1;$('msg').textContent='กำลังลองโหลดอีกวิธี...';
+   const r=new FileReader();r.onload=()=>{v.src=r.result};r.onerror=()=>{$('msg').textContent='เปิดไฟล์ไม่ได้'};r.readAsDataURL(f);
+  }else $('msg').textContent='เบราว์เซอร์เล่นไฟล์นี้ไม่ได้ ลองแปลงเป็น MP4 (H.264) หรือ WebM ก่อน';
+ };
+ try{v.src=URL.createObjectURL(f)}catch(x){v.onerror()}
+};
+$('fs').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(t=>{words=[];load(t);loaded=true;$('msg').textContent='โหลดซับแล้ว: '+f.name})};
+$('gen').onclick=async()=>{
+ const f=$('fv').files[0],m=t=>$('msg').textContent=t,pg=$('pg'),b=$('gen');
+ if(!f){m('เลือกวิดีโอก่อน');return}
+ b.disabled=true;pg.style.display='block';pg.value=0;
+ try{
+  m('กำลังโหลดตัวถอดเสียง...');
+  const {pipeline}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2');
+  const asr=await pipeline('automatic-speech-recognition',$('model').value,{progress_callback:x=>{if(x.status==='progress'){pg.value=x.progress;m('โหลดโมเดล '+Math.round(x.progress)+'%')}}});
+  m('กำลังแยกเสียงจากวิดีโอ...');pg.removeAttribute('value');
+  const ctx=new AudioContext({sampleRate:16000});
+  const buf=await ctx.decodeAudioData(await f.arrayBuffer());
+  const a=buf.getChannelData(0);
+  m('กำลังถอดเสียงเป็นข้อความ รอสักครู่...');
+  const o={task:'transcribe',return_timestamps:true,chunk_length_s:30,stride_length_s:5};
+  if($('lang').value)o.language=$('lang').value;
+  const r=await asr(a,o);
+  const lc={thai:'th',english:'en',japanese:'ja',chinese:'zh',korean:'ko'}[$('lang').value]||'th';
+  const sg=window.Intl&&Intl.Segmenter?new Intl.Segmenter(lc,{granularity:'word'}):null;
+  words=[];let prev='',full='';const ch=[];
+  for(const c of r.chunks){
+   const t=c.text.normalize('NFC').replace(/\uFFFD/g,'').replace(/\s+/g,' ');
+   if(!t.trim()||t.trim()===prev)continue;prev=t.trim();
+   const s0=c.timestamp[0];ch.push({st:full.length,len:t.length,s0,e0:c.timestamp[1]??s0+3});full+=t;
+  }
+  if(ch.length){
+   let ps,ix=0;
+   if(sg)ps=[...sg.segment(full)].map(x=>({t:x.segment,i:x.index}));
+   else ps=(full.match(/[A-Za-z0-9']+\s*|[^\sA-Za-z0-9']\s*|\s+/g)||[]).map(t=>{const o={t,i:ix};ix+=t.length;return o});
+   let ci=0;const at=q=>{while(ci<ch.length-1&&q>=ch[ci+1].st)ci++;return ch[ci]};
+   const tm=(k,q)=>k.s0+(k.e0-k.s0)*(q-k.st)/k.len;
+   const un=ps.map(p=>{const k1=at(p.i),k2=at(p.i+p.t.length-1);return{s:tm(k1,p.i),e:tm(k2,p.i+p.t.length),t:p.t}});
+   const out=[];
+   for(const u of un){
+    const l=out[out.length-1];
+    if(l&&(/^[\u0E30\u0E31\u0E32\u0E33\u0E34-\u0E3A\u0E45\u0E47-\u0E4E]/.test(u.t)||/[\u0E40-\u0E44]$/.test(l.t))){l.t+=u.t;l.e=u.e;continue}
+    out.push({...u});
+   }
+   words=out;
+  }
+  loaded=true;regroup();
+  m(cues.length?'สร้างซับเสร็จแล้ว '+cues.length+' ช่วง ตัดให้เข้ากับเทมเพลต '+(S.preset||'ที่ปรับเอง')+' กดเล่นวิดีโอเพื่อดู หรือเปลี่ยนเทมเพลตได้เลย':'ไม่พบเสียงพูดในวิดีโอ');
+ }catch(e){m('ผิดพลาด: '+(e.message||e)+' (ต้องต่ออินเทอร์เน็ต และไฟล์ต้องไม่ใหญ่เกินไป)')}
+ b.disabled=false;pg.style.display='none';
+};
+$('off').oninput=e=>{$('offv').textContent=e.target.value};
+
+const total=11;
+(function tick(){
+ const v=$('vid');
+ const t=(demo?(performance.now()/1000)%total:v.currentTime)-(+$('off').value);
+ const c=cues.find(c=>t>=c.s&&t<=c.e);
+ $('txt').textContent=c?c.t:'';
+ $('sub').style.visibility=c?'visible':'hidden';
+ requestAnimationFrame(tick);
+})();
+
+load(SAMPLE);setPreset('TikTok');
+</script>
+</body>
+</html>
