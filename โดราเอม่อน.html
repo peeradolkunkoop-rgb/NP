@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เว็บโพลหนัง - 8 ตุลา | Doraemon vs AOT</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <!-- Google Font (Prompt) -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-white">
+
+    <!-- Header -->
+    <header class="py-6 px-4 text-center bg-slate-900/80 backdrop-blur border-b border-slate-800 sticky top-0 z-50">
+        <span class="bg-cyan-500/10 text-cyan-400 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider border border-cyan-500/20">
+            📅 โหวตประจำวันที่ 8 ตุลาคม
+        </span>
+        <h1 class="text-3xl md:text-4xl font-extrabold mt-2 tracking-tight bg-gradient-to-r from-cyan-400 via-sky-300 to-rose-400 bg-clip-text text-transparent">
+            Doraemon vs Attack on Titan
+        </h1>
+        <p class="text-slate-400 text-sm mt-1">ศึกตัดสินภาพยนตร์ที่คุณรอคอย ใครจะชนะ มาโหวตกัน!</p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-8 w-full flex-grow grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        
+        <!-- Voting Cards Column -->
+        <div class="space-y-6">
+            <h2 class="text-xl font-bold text-slate-200 border-l-4 border-cyan-500 pl-3">เลือกฝั่งที่คุณเชียร์</h2>
+            
+            <!-- Doraemon Card -->
+            <div class="bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 transition-all rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+                <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/20 transition-all"></div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">🤖</span>
+                        <div>
+                            <h3 class="text-xl font-bold text-cyan-400">Doraemon</h3>
+                            <p class="text-xs text-slate-400">เพื่อนซี้ในวัยเด็กและมิติเวลา</p>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="vote('doraemon')" id="btn-doraemon" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-cyan-600/30 transition-all transform active:scale-95 cursor-pointer">
+                    โหวตโดราเอมอน 💙
+                </button>
+            </div>
+
+            <!-- AOT Card -->
+            <div class="bg-slate-900/90 border border-slate-800 hover:border-rose-500/50 transition-all rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+                <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl group-hover:bg-rose-500/20 transition-all"></div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">⚔️</span>
+                        <div>
+                            <h3 class="text-xl font-bold text-rose-400">Attack on Titan</h3>
+                            <p class="text-xs text-slate-400">เพื่ออิสรภาพและการต่อสู้</p>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="vote('aot')" id="btn-aot" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-rose-600/30 transition-all transform active:scale-95 cursor-pointer">
+                    โหวตผ่าพิภพไททัน ❤️
+                </button>
+            </div>
+
+            <!-- Voted Status Alert -->
+            <div id="voted-alert" class="hidden bg-emerald-950/50 border border-emerald-500/30 text-emerald-300 text-center py-2.5 px-4 rounded-xl text-sm font-medium">
+                ✅ คุณได้ทำการโหวตเรียบร้อยแล้ว (สามารถเปลี่ยนใจกดโหวตใหม่ได้)
+            </div>
+        </div>
+
+        <!-- Realtime Chart Column -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col items-center justify-center">
+            <h2 class="text-xl font-bold text-slate-200 mb-4 w-full text-left border-l-4 border-rose-500 pl-3">ผลโหวตเรียลไทม์</h2>
+            <div class="w-full relative h-64 md:h-72 flex items-center justify-center">
+                <canvas id="pollChart"></canvas>
+            </div>
+            <div class="mt-6 flex justify-between w-full text-sm text-slate-400 border-t border-slate-800 pt-4">
+                <span>ผู้โหวตทั้งหมด: <strong id="total-votes" class="text-slate-100 font-bold">0</strong> คน</span>
+                <button onclick="resetVotes()" class="text-xs text-slate-500 hover:text-rose-400 underline cursor-pointer transition-colors">รีเซ็ตผลโหวต</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-xs text-slate-600 border-t border-slate-900">
+        สร้างด้วยความตื่นเต้นเพื่อชาวอนิเมะ • โหวตความจริงใจแบบเรียลไทม์
+    </footer>
+
+    <!-- Script Logic -->
+    <script>
+        // กำหนดคะแนนเริ่มต้นเป็น 0 (หรือดึงจาก localStorage ถ้าเคยโหวตแล้ว)
+        let votes = JSON.parse(localStorage.getItem('anime_poll_votes')) || { doraemon: 0, aot: 0 };
+        let userChoice = localStorage.getItem('anime_user_choice') || null;
+
+        // ตั้งค่า Chart.js
+        const ctx = document.getElementById('pollChart').getContext('2d');
+        const pollChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Doraemon (โดราเอมอน)', 'Attack on Titan (ไททัน)'],
+                datasets: [{
+                    data: [votes.doraemon, votes.aot],
+                    backgroundColor: ['#06b6d4', '#f43f5e'],
+                    borderColor: '#090d16',
+                    borderWidth: 4,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#cbd5e1',
+                            font: {
+                                family: "'Prompt', sans-serif",
+                                size: 13
+                            },
+                            padding: 20
+                        }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+
+        // อัปเดต UI หน้าเว็บ
+        function updateUI() {
+            const total = votes.doraemon + votes.aot;
+            document.getElementById('total-votes').innerText = total;
+
+            // อัปเดตข้อมูลกราฟ
+            pollChart.data.datasets[0].data = [votes.doraemon, votes.aot];
+            pollChart.update();
+
+            // แสดงสถานะถ้าโหวตแล้ว
+            const alertBox = document.getElementById('voted-alert');
+            const btnDoraemon = document.getElementById('btn-doraemon');
+            const btnAot = document.getElementById('btn-aot');
+
+            btnDoraemon.classList.remove('ring-4', 'ring-cyan-300');
+            btnAot.classList.remove('ring-4', 'ring-rose-300');
+
+            if (userChoice === 'doraemon') {
+                btnDoraemon.classList.add('ring-4', 'ring-cyan-300');
+                alertBox.classList.remove('hidden');
+            } else if (userChoice === 'aot') {
+                btnAot.classList.add('ring-4', 'ring-rose-300');
+                alertBox.classList.remove('hidden');
+            } else {
+                alertBox.classList.add('hidden');
+            }
+        }
+
+        // ฟังก์ชันเมื่อกดโหวต
+        function vote(choice) {
+            if (userChoice === choice) return; // ถ้ากดซ้ำฝั่งเดิม ไม่ทำอะไร
+
+            if (userChoice !== null) {
+                // ถ้าเคยโหวตอีกฝั่ง ให้ลดแต้มฝั่งเก่าก่อน
+                votes[userChoice]--;
+            }
+
+            votes[choice]++;
+            userChoice = choice;
+
+            // บันทึกลง localStorage
+            localStorage.setItem('anime_poll_votes', JSON.stringify(votes));
+            localStorage.setItem('anime_user_choice', userChoice);
+
+            updateUI();
+
+            // พลุเฉลิมฉลองความมันส์
+            confetti({
+                particleCount: 80,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        // ฟังก์ชันรีเซ็ตโหวต
+        function resetVotes() {
+            if(confirm("คุณต้องการรีเซ็ตผลโหวตทั้งหมดใช่หรือไม่?")) {
+                votes = { doraemon: 0, aot: 0 };
+                userChoice = null;
+                localStorage.removeItem('anime_poll_votes');
+                localStorage.removeItem('anime_user_choice');
+                updateUI();
+            }
+        }
+
+        // ทำงานซิงค์ข้อมูลเรียลไทม์ระหว่างแท็บอัตโนมัติ
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'anime_poll_votes') {
+                votes = JSON.parse(event.newValue) || { doraemon: 0, aot: 0 };
+                updateUI();
+            }
+        });
+
+        // รันครั้งแรก
+        updateUI();
+    </script>
+</body>
+</html>
