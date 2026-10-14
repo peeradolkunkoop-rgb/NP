@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Code Sharing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Fira Code', 'Consolas', 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 16px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+        .copy-btn {
+            background-color: #3b82f6;
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .copy-btn:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .editor-container {
+            flex: 1;
+            width: 100%;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            background-color: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="status-badge">
+            <span class="status-dot"></span>
+            <span id="status-text">เชื่อมต่อเรียลไทม์แล้ว</span>
+        </div>
+        <button class="copy-btn" id="copyBtn" onclick="copyCode()">Copy</button>
+    </div>
+
+    <div class="editor-container">
+        <textarea id="codeEditor" placeholder="วางโค้ดที่นี่... ข้อมูลจะซิงค์ไปยังทุกเครื่องทันที"></textarea>
+    </div>
+
+    <!-- Firebase SDK (ใช้เซิร์ฟเวอร์คลาวด์ฟรี) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // คอนฟิก Firebase แบบอ่าน/เขียนสาธารณะฟรี
+        const firebaseConfig = {
+            projectId: "demo-live-pastebin"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const codeDocRef = doc(db, "shared", "code");
+
+        const editor = document.getElementById('codeEditor');
+        let isTyping = false;
+        let timeout = null;
+
+        // ดึงโค้ดเรียลไทม์จากทุกเครื่อง
+        onSnapshot(codeDocRef, (docSnap) => {
+            if (docSnap.exists() && !isTyping) {
+                const data = docSnap.data();
+                if (data.content !== undefined && editor.value !== data.content) {
+                    editor.value = data.content;
+                }
+            }
+        });
+
+        // ส่งโค้ดขึ้นคลาวด์เมื่อมีการพิมพ์
+        editor.addEventListener('input', () => {
+            isTyping = true;
+            clearTimeout(timeout);
+
+            // บันทึกหลังจากหยุดพิมพ์ 300ms เพื่อประหยัดทราฟฟิก
+            timeout = setTimeout(() => {
+                setDoc(codeDocRef, {
+                    content: editor.value,
+                    updatedAt: new Date()
+                }, { merge: true }).then(() => {
+                    isTyping = false;
+                });
+            }, 300);
+        });
+    </script>
+
+    <script>
+        // ฟังก์ชันปุ่ม Copy
+        function copyCode() {
+            const editor = document.getElementById('codeEditor');
+            editor.select();
+            navigator.clipboard.writeText(editor.value).then(() => {
+                const btn = document.getElementById('copyBtn');
+                btn.innerText = 'Copied!';
+                btn.style.backgroundColor = '#22c55e';
+                setTimeout(() => {
+                    btn.innerText = 'Copy';
+                    btn.style.backgroundColor = '#3b82f6';
+                }, 2000);
+            });
+        }
+    </script>
+
+</body>
+</html>
