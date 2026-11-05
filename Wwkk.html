@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok CleanDownloader - ดาวน์โหลดวิดีโอ TikTok ไร้ลายน้ำ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Prompt', sans-serif; }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .tiktok-gradient {
+            background: linear-gradient(135deg, #25f4ee 0%, #fe2c55 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-pink-500 selection:text-white">
+
+    <!-- Header -->
+    <header class="w-full border-b border-slate-800/80 bg-slate-900/95 backdrop-blur sticky top-0 z-50 py-4 px-6 shadow-xl">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="tiktok-gradient p-2.5 rounded-2xl text-slate-950 shadow-lg shadow-pink-500/20 font-bold">
+                    <i class="fa-brands fa-tiktok text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wide text-white">
+                        TikTok CleanDownloader
+                    </h1>
+                    <p class="text-xs text-slate-400">ดาวน์โหลดวิดีโอ TikTok ไร้ลายน้ำ ไร้ชื่อช่อง 100%</p>
+                </div>
+            </div>
+            <div class="hidden sm:flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
+                <i class="fa-solid fa-shield-check"></i> โหมดวิดีโอคลีน
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-3xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-6 justify-center my-4">
+        
+        <!-- Hero Section -->
+        <div class="text-center space-y-2">
+            <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                ดาวน์โหลดวิดีโอ <span class="bg-gradient-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent">TikTok ไร้ลายน้ำ</span>
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                วางลิงก์วิดีโอ TikTok เพื่อสกัดไฟล์วิดีโอความคมชัดสูงแบบไม่มีโลโก้หรือชื่อช่องติดมาด้วย
+            </p>
+        </div>
+
+        <!-- Input Box -->
+        <div class="glass-card p-5 sm:p-6 rounded-3xl shadow-2xl">
+            <label class="block text-xs font-medium text-slate-300 mb-2">วางลิงก์วิดีโอ TikTok:</label>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-1">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500">
+                        <i class="fa-brands fa-tiktok text-pink-500"></i>
+                    </span>
+                    <input type="url" id="tiktokUrlInput" 
+                        placeholder="เช่น https://www.tiktok.com/@user/video/... หรือลิงก์สั้น vt.tiktok.com" 
+                        class="w-full bg-slate-950/90 border border-slate-700/80 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-pink-500 transition-all shadow-inner">
+                </div>
+                <button onclick="extractTikTok()" id="extractBtn" 
+                    class="tiktok-gradient text-slate-950 font-bold px-7 py-3.5 rounded-2xl transition-all shadow-lg shadow-pink-500/20 flex items-center justify-center gap-2 cursor-pointer hover:opacity-95">
+                    <i class="fa-solid fa-download" id="btnIcon"></i>
+                    <span id="btnText">ดาวน์โหลด</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Section -->
+        <div id="resultContainer" class="hidden glass-card rounded-3xl p-5 sm:p-6 shadow-2xl border border-pink-500/30 flex flex-col md:flex-row gap-6 animate-fadeIn">
+            <!-- Left: Video Player Preview -->
+            <div class="w-full md:w-1/2 flex flex-col items-center justify-center bg-slate-950 rounded-2xl p-2 border border-slate-800">
+                <div class="w-full aspect-[9/16] max-h-[380px] rounded-xl overflow-hidden relative bg-black flex items-center justify-center">
+                    <video id="cleanVideoPlayer" controls class="w-full h-full object-contain rounded-xl"></video>
+                </div>
+                <span class="text-[11px] text-slate-400 mt-2"><i class="fa-solid fa-circle-play mr-1 text-pink-400"></i> พรีวิวก่อนดาวน์โหลด</span>
+            </div>
+
+            <!-- Right: Action Download Buttons -->
+            <div class="w-full md:w-1/2 flex flex-col justify-between gap-5">
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3.5 py-2 rounded-xl text-xs font-medium w-fit">
+                        <i class="fa-solid fa-circle-check"></i> สกัดวิดีโอสำเร็จ (ไม่มีลายน้ำ)
+                    </div>
+
+                    <div>
+                        <h3 class="text-base font-bold text-white mb-1">TikTok HD (No Watermark)</h3>
+                        <p class="text-xs text-slate-400">ไฟล์วิดีโอสะอาดบริสุทธิ์ ไม่มีชื่อช่องและโลโก้ TikTok ติดมาด้วย</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-2">
+                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                            <span class="block text-[11px] text-slate-400">คุณภาพ</span>
+                            <span class="text-xs font-semibold text-cyan-400">Original HD</span>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                            <span class="block text-[11px] text-slate-400">สถานะ</span>
+                            <span class="text-xs font-semibold text-emerald-400">ไร้ลายน้ำ 100%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col gap-3 pt-4 border-t border-slate-800">
+                    <button onclick="downloadVideoFile()" id="downloadActionBtn"
+                        class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer">
+                        <i class="fa-solid fa-file-arrow-down text-base" id="downloadIcon"></i> <span id="downloadText">บันทึกวิดีโอ MP4 ลงเครื่อง</span>
+                    </button>
+                    <button onclick="copyVideoUrl()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-regular fa-copy"></i> คัดลอกลิงก์ไฟล์ตรง
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-4 text-xs text-slate-500 border-t border-slate-800/60 mt-auto bg-slate-900/40">
+        TikTok CleanDownloader &bull; No Watermark Video Tool
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let directVideoUrl = "";
+
+        async function extractTikTok() {
+            let url = document.getElementById('tiktokUrlInput').value.trim();
+            if (!url) {
+                alert('กรุณากรอกลิงก์ TikTok');
+                return;
+            }
+
+            const btn = document.getElementById('extractBtn');
+            const icon = document.getElementById('btnIcon');
+            const text = document.getElementById('btnText');
+
+            btn.disabled = true;
+            icon.className = "fa-solid fa-spinner fa-spin";
+            text.innerText = "กำลังประมวลผล...";
+
+            try {
+                const response = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`);
+                const data = await response.json();
+
+                if (data.code === 0 && data.data && data.data.play) {
+                    directVideoUrl = data.data.play;
+                    document.getElementById('cleanVideoPlayer').src = directVideoUrl;
+                    
+                    document.getElementById('resultContainer').classList.remove('hidden');
+                    document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    throw new Error('Invalid response');
+                }
+            } catch (err) {
+                alert('ไม่สามารถดึงวิดีโอได้ กรุณาตรวจสอบลิงก์ TikTok อีกครั้ง');
+            } finally {
+                btn.disabled = false;
+                icon.className = "fa-solid fa-download";
+                text.innerText = "ดาวน์โหลด";
+            }
+        }
+
+        async function downloadVideoFile() {
+            if (!directVideoUrl) return;
+
+            const btn = document.getElementById('downloadActionBtn');
+            const icon = document.getElementById('downloadIcon');
+            const text = document.getElementById('downloadText');
+
+            btn.disabled = true;
+            icon.className = "fa-solid fa-spinner fa-spin";
+            text.innerText = "กำลังดาวน์โหลดไฟล์ลงเครื่อง...";
+
+            try {
+                // ดึงข้อมูลไฟล์ผ่าน Blob เพื่อบังคับดาวน์โหลดข้ามโดเมน
+                const response = await fetch(directVideoUrl);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = blobUrl;
+                a.download = 'tiktok_no_watermark.mp4';
+                document.body.appendChild(a);
+                a.click();
+                
+                window.URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(a);
+            } catch (e) {
+                // หากติดข้อจำกัด CORS จะเปิดลิงก์ตรงสำรองให้แทน
+                window.open(directVideoUrl, '_blank');
+            } finally {
+                btn.disabled = false;
+                icon.className = "fa-solid fa-file-arrow-down";
+                text.innerText = "บันทึกวิดีโอ MP4 ลงเครื่อง";
+            }
+        }
+
+        function copyVideoUrl() {
+            if (!directVideoUrl) return;
+            navigator.clipboard.writeText(directVideoUrl).then(() => {
+                alert('คัดลอกลิงก์ไฟล์ตรงเรียบร้อยแล้ว!');
+            });
+        }
+    </script>
+</body>
+</html>
